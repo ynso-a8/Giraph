@@ -73,17 +73,7 @@ const GiraffeNeckBar = (props: any) => {
 
   return (
     <g>
-      {/* Giraffe Head Render centered exactly on the neck bar */}
-      <foreignObject
-        x={headX}
-        y={headY}
-        width={S}
-        height={S}
-      >
-        <GiraffeFace score={moodScore} size={S} />
-      </foreignObject>
-
-      {/* Main Neck Column - perfectly matching the emoji neck width! */}
+      {/* Main Neck Column - perfectly matching the emoji neck width! Drawn first (background) */}
       <rect
         x={neckX}
         y={y}
@@ -108,6 +98,16 @@ const GiraffeNeckBar = (props: any) => {
           )}
         </svg>
       )}
+
+      {/* Giraffe Head Render centered exactly on the neck bar - Drawn second (foreground) */}
+      <foreignObject
+        x={headX}
+        y={headY}
+        width={S}
+        height={S}
+      >
+        <GiraffeFace score={moodScore} size={S} />
+      </foreignObject>
     </g>
   );
 };
@@ -273,7 +273,7 @@ export default function MoodChart({ logs }: MoodChartProps) {
               <AreaChart
                 key={`line-${themeToken}`}
                 data={chartData}
-                margin={{ top: 12, right: 10, left: -25, bottom: 0 }}
+                margin={{ top: 25, right: 10, left: -25, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
@@ -318,7 +318,7 @@ export default function MoodChart({ logs }: MoodChartProps) {
               <BarChart
                 key={`bar-${themeToken}`}
                 data={chartData}
-                margin={{ top: 18, right: 10, left: -25, bottom: 0 }}
+                margin={{ top: 35, right: 10, left: -25, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f2e" opacity={0.3} />
                 <XAxis
@@ -345,6 +345,7 @@ export default function MoodChart({ logs }: MoodChartProps) {
                 <Bar
                   dataKey="mood_score"
                   shape={<GiraffeNeckBar />}
+                  isAnimationActive={false}
                 />
               </BarChart>
             )}
