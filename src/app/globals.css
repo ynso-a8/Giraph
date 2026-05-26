@@ -121,3 +121,131 @@ body {
   color: var(--color-primary);
 }
 
+/* Custom Thin Premium Horizontal Chart Scrollbar */
+.custom-chart-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+.custom-chart-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.custom-chart-scroll::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.35);
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+.custom-chart-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-primary-rgb), 0.65);
+}
+
+/* Light Mode Overrides for overall layout and elements */
+[data-theme-mode="light"] {
+  --background: #fbfbfa; /* Cozy Warm White */
+  --foreground: #1c1917; /* Soft Charcoal */
+  --color-card-bg: rgba(255, 255, 255, 0.78); /* Soft White Glass Card */
+  --color-card-border: rgba(var(--color-primary-rgb), 0.15);
+  --color-text-muted: #57534e;
+  --color-bg-slider: #e5e5e0;
+  
+  /* Background glow adjustments for light mode */
+  .fixed.top-\[-10\%\].left-\[-20\%\] {
+    background-color: rgba(var(--color-primary-rgb), 0.05) !important;
+  }
+  .fixed.bottom-\[-10\%\].right-\[-20\%\] {
+    background-color: rgba(var(--color-primary-rgb), 0.03) !important;
+  }
+  
+  /* Update card borders and backgrounds for light mode */
+  .bg-zinc-900\/10 {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+  }
+  .bg-zinc-950\/20 {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .bg-zinc-950\/40 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+  }
+  .bg-zinc-900\/30 {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+  .bg-zinc-950, .bg-zinc-950\/85 {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  .border-white\/5, .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  .border-zinc-800 {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+  }
+  .bg-zinc-900\/40, .bg-zinc-950\/65, .bg-gradient-to-br {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+  .border-zinc-900\/60, .border-zinc-900\/50, .border-zinc-900 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  /* Text colors */
+  .text-zinc-100 {
+    color: #1c1917 !important;
+  }
+  .text-zinc-200 {
+    color: #292524 !important;
+  }
+  .text-zinc-300 {
+    color: #44403c !important;
+  }
+  .text-zinc-400 {
+    color: #57534e !important;
+  }
+  .text-zinc-500 {
+    color: #78716c !important;
+  }
+  .text-zinc-600 {
+    color: #a8a29e !important;
+  }
+  .text-zinc-700 {
+    color: #78716c !important;
+  }
+  .text-white {
+    color: #1c1917 !important;
+  }
+  .text-zinc-50 {
+    color: #1c1917 !important;
+  }
+  
+  /* Inputs, Textareas, DatePickers */
+  textarea, input[type="text"], input[type="date"] {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #1c1917 !important;
+  }
+  
+  /* Custom Buttons */
+  button.bg-zinc-900\/60, button.bg-zinc-900\/30 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #44403c !important;
+  }
+  button.bg-zinc-900\/60:hover, button.bg-zinc-900\/30:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+    color: #1c1917 !important;
+  }
+  
+  /* Chat Interface bot bubble overrides */
+  .bg-zinc-800\/80 {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+    color: #292524 !important;
+  }
+  
+  /* Mobile Frame border glow */
+  .sm\:border {
+    border-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  .shadow-\[0_24_64_rgba\(0\,0\,0\,0\.6\)\] {
+    shadow: 0 12px 40px rgba(0,0,0,0.1) !important;
+  }
+}
+

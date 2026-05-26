@@ -33,9 +33,10 @@ export default function MoodSlider({ value, onChange }: MoodSliderProps) {
           max="100"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-zinc-800 focus:outline-none accent-violet-500 transition-all duration-300"
+          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[var(--color-bg-slider,#27272a)] focus:outline-none transition-all duration-300"
           style={{
-            background: `linear-gradient(to right, #8b5cf6 0%, #a78bfa ${value}%, #27272a ${value}%, #27272a 100%)`,
+            background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${value}%, var(--color-bg-slider, #27272a) ${value}%, var(--color-bg-slider, #27272a) 100%)`,
+            accentColor: 'var(--color-primary)',
           }}
         />
         <div className="flex justify-between text-[10px] text-zinc-500 mt-2 font-medium">

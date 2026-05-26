@@ -116,6 +116,21 @@ export default function MoodChart({ logs }: MoodChartProps) {
   const [filter, setFilter] = useState<FilterType>('7days');
   const [chartType, setChartType] = useState<ChartType>('line');
   const [themeToken, setThemeToken] = useState('lavender');
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Scroll to the far right so the user sees the most recent logs first
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, [filter, logs]);
+
+  const containerWidth = useMemo(() => {
+    if (filter === 'all' && logs.length > 30) {
+      return `${(logs.length / 30) * 100}%`;
+    }
+    return '100%';
+  }, [filter, logs.length]);
 
   // Monitor theme switching to force re-render charts beautifully
   useEffect(() => {
@@ -265,102 +280,123 @@ export default function MoodChart({ logs }: MoodChartProps) {
         </div>
       </div>
 
-      {/* Chart Canvas Area */}
-      <div className="h-64 w-full flex items-center justify-center mt-2">
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            {chartType === 'line' ? (
-              <AreaChart
-                key={`line-${themeToken}`}
-                data={chartData}
-                margin={{ top: 25, right: 10, left: -25, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={primaryColor} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={primaryColor} stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f2e" opacity={0.3} />
-                <XAxis
-                  dataKey="formattedDate"
-                  stroke="#52525b"
-                  fontSize={10}
-                  fontWeight="bold"
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  ticks={[0, 25, 50, 75, 100]}
-                  stroke="#52525b"
-                  fontSize={10}
-                  fontWeight="bold"
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-5}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#3f3f46', strokeWidth: 1 }} />
-                <ReferenceLine y={50} stroke="#3f3f46" strokeDasharray="5 5" strokeOpacity={0.5} />
-                <Area
-                  type="monotone"
-                  dataKey="mood_score"
-                  stroke={primaryColor}
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorMood)"
-                  dot={<GiraffeDot />}
-                  activeDot={{ r: 8, fill: '#fbbf24', stroke: '#d97706', strokeWidth: 2 }}
-                />
-              </AreaChart>
-            ) : (
-              <BarChart
-                key={`bar-${themeToken}`}
-                data={chartData}
-                margin={{ top: 35, right: 10, left: -25, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f2e" opacity={0.3} />
-                <XAxis
-                  dataKey="formattedDate"
-                  stroke="#52525b"
-                  fontSize={10}
-                  fontWeight="bold"
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  ticks={[0, 25, 50, 75, 100]}
-                  stroke="#52525b"
-                  fontSize={10}
-                  fontWeight="bold"
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-5}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                <ReferenceLine y={50} stroke="#3f3f46" strokeDasharray="5 5" strokeOpacity={0.5} />
-                <Bar
-                  dataKey="mood_score"
-                  shape={<GiraffeNeckBar />}
-                  isAnimationActive={false}
-                />
-              </BarChart>
-            )}
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center gap-3 text-zinc-500">
-            <AlertCircle className="w-10 h-10 text-zinc-700 animate-bounce" />
-            <div>
-              <p className="font-bold text-xs text-zinc-400">기래프 데이터가 부족합니다</p>
-              <p className="text-[10px] text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
-                기록된 기분이 없습니다. 기-log 탭에서 기린 심장 스티커와 오늘의 기분을 채워주세요.
-              </p>
+      {/* Chart Canvas Area with Dynamic Scroll scaling */}
+      <div 
+        ref={scrollContainerRef}
+        className="h-64 w-full overflow-x-auto mt-2 custom-chart-scroll"
+      >
+        <div className="h-full min-w-full" style={{ width: containerWidth }}>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              {chartType === 'line' ? (
+                <AreaChart
+                  key={`line-${themeToken}`}
+                  data={chartData}
+                  margin={{ top: 25, right: 10, left: -25, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={primaryColor} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={primaryColor} stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f2e" opacity={0.3} />
+                  <XAxis
+                    dataKey="formattedDate"
+                    stroke="#52525b"
+                    fontSize={10}
+                    fontWeight="bold"
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                    stroke="#52525b"
+                    fontSize={10}
+                    fontWeight="bold"
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-5}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#3f3f46', strokeWidth: 1 }} />
+                  <ReferenceLine y={50} stroke="#3f3f46" strokeDasharray="5 5" strokeOpacity={0.5} />
+                  <Area
+                    type="monotone"
+                    dataKey="mood_score"
+                    stroke={primaryColor}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorMood)"
+                    dot={
+                      filter === '7days'
+                        ? <GiraffeDot />
+                        : { r: 3.5, fill: primaryColor, stroke: '#1e1b4b', strokeWidth: 1.5 }
+                    }
+                    activeDot={{ r: 6, fill: '#fbbf24', stroke: '#d97706', strokeWidth: 1.5 }}
+                  />
+                </AreaChart>
+              ) : (
+                <BarChart
+                  key={`bar-${themeToken}`}
+                  data={chartData}
+                  margin={{ top: 35, right: 10, left: -25, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f2e" opacity={0.3} />
+                  <XAxis
+                    dataKey="formattedDate"
+                    stroke="#52525b"
+                    fontSize={10}
+                    fontWeight="bold"
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                    stroke="#52525b"
+                    fontSize={10}
+                    fontWeight="bold"
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-5}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                  <ReferenceLine y={50} stroke="#3f3f46" strokeDasharray="5 5" strokeOpacity={0.5} />
+                  {filter === '7days' ? (
+                    <Bar
+                      dataKey="mood_score"
+                      shape={<GiraffeNeckBar />}
+                      isAnimationActive={false}
+                    />
+                  ) : (
+                    <Bar
+                      dataKey="mood_score"
+                      fill={primaryColor}
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={20}
+                      fillOpacity={0.85}
+                      stroke={primaryColor}
+                      strokeWidth={1}
+                    />
+                  )}
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center gap-3 text-zinc-500 h-full w-full">
+              <AlertCircle className="w-10 h-10 text-zinc-700 animate-bounce" />
+              <div>
+                <p className="font-bold text-xs text-zinc-400">기래프 데이터가 부족합니다</p>
+                <p className="text-[10px] text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
+                  기록된 기분이 없습니다. 기-log 탭에서 기린 심장 스티커와 오늘의 기분을 채워주세요.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

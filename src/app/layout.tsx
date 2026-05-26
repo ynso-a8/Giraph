@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${outfit.variable} h-full dark`}>
+    <html lang="ko" className={`${outfit.variable} h-full`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -27,6 +27,8 @@ export default function RootLayout({
               try {
                 const theme = localStorage.getItem('mood_tracker_theme') || 'lavender';
                 document.documentElement.setAttribute('data-theme', theme);
+                const mode = localStorage.getItem('mood_tracker_theme_mode') || 'dark';
+                document.documentElement.setAttribute('data-theme-mode', mode);
               } catch (e) {}
             `,
           }}

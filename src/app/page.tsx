@@ -19,6 +19,7 @@ export default function Home() {
 
   // Theme state
   const [activeTheme, setActiveTheme] = useState('lavender');
+  const [themeMode, setThemeMode] = useState('dark');
   const [showThemePicker, setShowThemePicker] = useState(false);
 
   // Main Logger Form States
@@ -61,6 +62,11 @@ export default function Home() {
     const savedTheme = localStorage.getItem('mood_tracker_theme') || 'lavender';
     setActiveTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const savedMode = localStorage.getItem('mood_tracker_theme_mode') || 'dark';
+    setThemeMode(savedMode);
+    document.documentElement.setAttribute('data-theme-mode', savedMode);
+
     setIsDemo(moodService.isDemoMode());
     fetchLogs();
   }, []);
@@ -69,6 +75,14 @@ export default function Home() {
     setActiveTheme(themeId);
     document.documentElement.setAttribute('data-theme', themeId);
     localStorage.setItem('mood_tracker_theme', themeId);
+    // Dispatch storage event to notify other components (e.g. charts) that theme changed
+    window.dispatchEvent(new Event('theme-changed'));
+  };
+
+  const changeThemeMode = (mode: string) => {
+    setThemeMode(mode);
+    document.documentElement.setAttribute('data-theme-mode', mode);
+    localStorage.setItem('mood_tracker_theme_mode', mode);
     // Dispatch storage event to notify other components (e.g. charts) that theme changed
     window.dispatchEvent(new Event('theme-changed'));
   };
@@ -87,6 +101,18 @@ export default function Home() {
       setCalendarLogs(indexed);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleSeedData = () => {
+    try {
+      moodService.seedSampleLogs();
+      fetchLogs();
+      alert('⚡ 4월 & 5월 두 달치 감정 테스트 데이터(56개)가 로컬 브라우저에 성공적으로 주입되었습니다! 달력과 기래프 차트를 확인해 보세요! 🦒🌿');
+      setShowThemePicker(false);
+    } catch (e) {
+      console.error(e);
+      alert('데이터 주입에 실패했습니다.');
     }
   };
 
@@ -385,6 +411,43 @@ export default function Home() {
                   {activeTheme === theme.id && <span className="text-[8px]">✓</span>}
                 </button>
               ))}
+              
+              {/* Brightness Mode Toggle (Light/Dark Mode) */}
+              <div className="text-[9px] font-bold text-zinc-500 px-2 py-1 border-t border-b border-zinc-900/60 mt-1.5">밝기 모드</div>
+              <div className="flex p-0.5 bg-zinc-900/50 rounded-lg mt-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => changeThemeMode('light')}
+                  className={`flex-1 text-center py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                    themeMode === 'light'
+                      ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-300'
+                  }`}
+                >
+                  ☀️ 포근한 낮
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeThemeMode('dark')}
+                  className={`flex-1 text-center py-1 rounded-md text-[9px] font-bold transition-all cursor-pointer ${
+                    themeMode === 'dark'
+                      ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-300'
+                  }`}
+                >
+                  🌙 차분한 밤
+                </button>
+              </div>
+
+              <div className="border-t border-zinc-900/60 mt-1.5 pt-1.5 flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={handleSeedData}
+                  className="w-full text-center py-1.5 rounded-lg text-[8px] font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all cursor-pointer"
+                >
+                  ⚡ 테스트 샘플 데이터 채우기 (4~5월)
+                </button>
+              </div>
             </div>
           )}
         </div>

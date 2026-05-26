@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import ChatInterface from '@/components/ChatInterface';
 import GiraffeFace from '@/components/GiraffeFace';
 import { moodService, MoodLog, getMoodState } from '@/lib/moodService';
-import { Sparkles, Brain, CheckCircle2, HeartPulse, RefreshCw, Play, Pause, Compass, Send, User, Bot } from 'lucide-react';
+import { Sparkles, Brain, CheckCircle2, HeartPulse, RefreshCw, Play, Pause, Compass, Send, User, Bot, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type BreathingState = 'idle' | 'inhale' | 'hold' | 'exhale';
 
@@ -19,6 +19,12 @@ interface QuizAnswers {
 export default function AnalysisPage() {
   const [logs, setLogs] = useState<MoodLog[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Calendar States for Analysis Date
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [analysisDates, setAnalysisDates] = useState<Record<string, boolean>>({});
 
   // Quiz submission states
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -47,11 +53,19 @@ export default function AnalysisPage() {
   const [chatIsTyping, setChatIsTyping] = useState(false);
   const chatMessagesEndRef = React.useRef<HTMLDivElement>(null);
 
+  // Dynamic analysis text state & tips state
+  const [reportText, setReportText] = useState('');
+  const [reportTips, setReportTips] = useState<string[]>([]);
+  const [reportSummary, setReportSummary] = useState<string[]>([]);
+  const [showFullReport, setShowFullReport] = useState(false);
+  const [currentEstimatedScore, setCurrentEstimatedScore] = useState(50);
+
   useEffect(() => {
     const fetchLogs = async () => {
       try {
         const fetched = await moodService.getMoodLogs();
         setLogs(fetched);
+        fetchAnalysisDates();
       } catch (e) {
         console.error(e);
       } finally {
@@ -60,6 +74,48 @@ export default function AnalysisPage() {
     };
     fetchLogs();
   }, []);
+
+  const fetchAnalysisDates = () => {
+    try {
+      const historyRecords = moodService.getAnalysisHistory();
+      const indexed: Record<string, boolean> = {};
+      historyRecords.forEach((h) => {
+        const dStr = new Date(h.date).toLocaleDateString('ko-KR');
+        indexed[dStr] = true;
+      });
+      setAnalysisDates(indexed);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const nextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(prev => prev + 1);
+    } else {
+      setCurrentMonth(prev => prev + 1);
+    }
+  };
+
+  const prevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(prev => prev - 1);
+    } else {
+      setCurrentMonth(prev => prev - 1);
+    }
+  };
+
+  const selectDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (date > today) {
+      alert('미래의 마음은 미리 진단할 수 없어요. 🦒✨ 오늘이나 과거의 날짜를 선택해 주세요!');
+      return;
+    }
+    setSelectedDate(date);
+  };
 
   // Breathing timer
   useEffect(() => {
@@ -153,15 +209,174 @@ export default function AnalysisPage() {
       subjective: subjectiveInput.trim(),
     };
 
+    // Calculate dynamic estimated score
+    let estimated = 50;
+    if (quizResult.intensity.includes('⚡')) estimated = 25;
+    else if (quizResult.intensity.includes('🌊')) estimated = 55;
+    else if (quizResult.intensity.includes('🌫️')) estimated = 75;
+    else estimated = 90;
+
+    setCurrentEstimatedScore(estimated);
     setAnswers(quizResult);
+
+    // Advanced dynamic AI analysis text scanning past logs with Time-Travel
+    let analysisText = '';
+    const isEarly = logs.length < 5;
+
+    // Time travel log filtering: only consider logs up to selectedDate
+    const targetDateMax = new Date(selectedDate);
+    targetDateMax.setHours(23, 59, 59, 999);
+    const relativeLogs = logs.filter(log => new Date(log.created_at) <= targetDateMax);
+
+    const categoryKeywords: Record<string, string[]> = {
+      '대인관계 👥': ['친구', '약속', '사람', '관계', '가족', '대화', '싸움', '오해', '소통', '선배', '후배', '동료', '애인', '남자친구', '여자친구', '부모', '엄마', '아빠', '연인', '싸웠', '통화', '만남'],
+      '학업/진로 📚': ['공부', '과제', '학습', '시험', '진로', '취업', '합격', '학교', '수업', '성적', '발표', '프로젝트', '연구', '면접', '자격증', '학회', '성공', '실패', '공동', '조별'],
+      '개인생활/휴식 🏡': ['집', '휴식', '개인', '취미', '영화', '잠', '침대', '혼자', '시간', '멍', '음악', '책', '독서', '산책', '게임', '여행', '목욕', '조용히', '카페', '커피'],
+      '신체건강/컨디션 🏃': ['몸', '컨디션', '건강', '피로', '아픔', '병원', '감기', '잠', '운동', '식사', '스트레칭', '두통', '치료', '체력', '잠자리', '영양제', '피곤', '지침', '아팠', '헬스']
+    };
+
+    // Scan past recovery pattern
+    const sortedRelativeLogs = [...relativeLogs].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    interface RecoveryPair {
+      d1: MoodLog;
+      d2: MoodLog;
+      diff: number;
+      isCategoryMatch: boolean;
+    }
+
+    const recoveryPairs: RecoveryPair[] = [];
+
+    // Find pairs where mood score increased by >= 10 points within 3 days
+    for (let i = 0; i < sortedRelativeLogs.length - 1; i++) {
+      const d1 = sortedRelativeLogs[i];
+      const d2 = sortedRelativeLogs[i + 1];
+
+      const timeGapHours = Math.abs(new Date(d2.created_at).getTime() - new Date(d1.created_at).getTime()) / (1000 * 60 * 60);
+
+      if (timeGapHours <= 72 && d1.mood_score <= 55 && d2.mood_score >= d1.mood_score + 10) {
+        const keywords = categoryKeywords[quizResult.category] || [];
+        const isCategoryMatch = keywords.some(kw => d1.reason.includes(kw) || d1.feeling.includes(kw));
+
+        recoveryPairs.push({
+          d1,
+          d2,
+          diff: d2.mood_score - d1.mood_score,
+          isCategoryMatch
+        });
+      }
+    }
+
+    let chosenPair: RecoveryPair | null = null;
+    const categoryMatches = recoveryPairs.filter(p => p.isCategoryMatch);
+
+    if (categoryMatches.length > 0) {
+      categoryMatches.sort((a, b) => b.diff - a.diff);
+      chosenPair = categoryMatches[0];
+    } else if (recoveryPairs.length > 0) {
+      recoveryPairs.sort((a, b) => b.diff - a.diff);
+      chosenPair = recoveryPairs[0];
+    }
+
+    let recoveryFound = false;
+    let customRecoveryAction = '';
+
+    if (chosenPair) {
+      recoveryFound = true;
+      const { d1, d2, diff } = chosenPair;
+      const formattedD1Date = new Date(d1.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+      const formattedD2Date = new Date(d2.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+      customRecoveryAction = d2.reason;
+
+      if (chosenPair.isCategoryMatch) {
+        analysisText = `과거 한동재님의 감정 지도를 깊숙이 스캔해 본 결과, 오늘 겪고 계신 '${quizResult.category}' 관련 무거움은 ${formattedD1Date}에 "${d1.reason}"(당시 기분 ${d1.mood_score}점)의 사유로 마음이 울적하셨던 순간과 매우 유사한 패턴을 띄고 있습니다. 하지만 놀랍게도 한동재님은 바로 다음 날인 ${formattedD2Date}에 "${d2.reason}"을(를) 실천하거나 집중하시며 기분 점수를 ${d2.mood_score}점까지 극적으로 도약(+${diff}점)시키셨던 찬란한 자가-회복 성공 이력을 가지고 계십니다! 오늘 선택하신 '${quizResult.coping}' 행동 처방과 더불어, 과거 본인이 직접 온몸으로 입증했던 비법인 "${d2.reason}"을(를) 가볍게 병행해 보세요. 당신은 이미 자신을 치유할 수 있는 완벽한 회복 공식과 내적인 지혜를 충분히 가지고 계시답니다.`;
+      } else {
+        analysisText = `과거 한동재님의 감정 변화 이력을 분석해 보았습니다. 오늘 자극받으신 '${quizResult.category}' 영역의 스트레스 반응은 몸에서 발생한 '${quizResult.physical}' 신호와 결합되어 다소 지쳐 있는 상태임을 대변합니다. 카테고리는 완벽히 일치하지 않지만, 과거 ${formattedD1Date}에 기분 점수가 ${d1.mood_score}점까지 처져 있을 때, 한동재님이 다음 날인 ${formattedD2Date}에 "${d2.reason}"을(를) 행동하시며 기분 점수를 ${d2.mood_score}점까지 수직 반등(+${diff}점)시켰던 빛나는 회복력이 감지되었습니다. 오늘 처방받으신 '${quizResult.coping}' 활동과 함께, 과거 스스로 증명했던 위 극복 활동을 작게나마 일상에 다시 초대해보는 것은 어떨까요?`;
+      }
+    } else {
+      const happyLogs = relativeLogs.filter(log => log.mood_score >= 70);
+      if (happyLogs.length > 0) {
+        const bestLog = [...happyLogs].sort((a, b) => b.mood_score - a.mood_score)[0];
+        const formattedBestDate = new Date(bestLog.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+        customRecoveryAction = bestLog.reason;
+        analysisText = `과거 감정 데이터를 정량 분석한 결과, 아직 극적인 반등(+10점 이상) 패턴은 잡히지 않았지만, 한동재님의 가장 맑고 눈부셨던 날 중 하나인 ${formattedBestDate}의 순간(당시 최고점 ${bestLog.mood_score}점)을 발견해냈습니다. 당시 한동재님의 마음을 가득 채우고 기래프를 미소 짓게 했던 극복 비법은 바로 "${bestLog.reason}"이었습니다. 오늘 느낀 '${quizResult.category}' 자극과 몸의 '${quizResult.physical}' 긴장 반응을 비워내기 위해, 과거 나에게 최고의 미소와 활력을 돌려주었던 이 특별한 활동을 다시 시도해볼 것을 적극적으로 처방합니다.`;
+      } else {
+        if (isEarly) {
+          analysisText = `오늘 느끼신 '${quizResult.category}' 영역의 스트레스 반응은 몸에서 나타난 '${quizResult.physical}' 긴장 신호와 합해져 자율신경계 피로를 대변하고 있습니다. 아직 기물 회복 통계 데이터가 부족하여 보편적인 대규모 사용자 임상 패턴을 대입해 드립니다. 평균 사용자들이 이럴 때 가장 빠른 조율을 보인 해결책은 바로 '${quizResult.coping}' 처방과 따스한 체온 유지, 수면 시간 확보였습니다. 메인 기-log에 오늘 기분 점수와 그 상세한 이유를 자주 기록해 가실수록, 기래프가 당신만의 극복 성공 사례를 자동 추출하여 1:1 특화 솔루션을 도출해냅니다.`;
+        } else {
+          analysisText = `오늘 선택하신 '${quizResult.category}' 자극은 강도 '${quizResult.intensity}' 수준으로 보이며, 몸에서는 '${quizResult.physical}' 신호를 발생시켜 피로 지수를 경고하고 있습니다. 아직 과거 기록 중 눈에 띄는 '+10점 이상 기분 상승 성공 패턴'이 모이지 않아 보편적 마인드 솔루션을 제안해 드립니다. 몸과 뇌의 긴장을 완화하기 위해 행동 팁 중 1가지를 즉시 실천해 본 뒤, 기분이 나아지면 기-log에 그 상세한 극복 요인을 적어주세요. 기록이 쌓일수록 오직 한동재님만을 위한 맞춤 극복 공식을 가동하게 됩니다.`;
+        }
+      }
+    }
+
+    const quizTips = [
+      `${quizResult.coping} 행동 솔루션을 즉각 10분 이상 시도하기`,
+      `하단의 4초 마인드 호흡 가이드를 천천히 3회 완수하여 뇌 에너지 충전하기`
+    ];
+
+    if (customRecoveryAction) {
+      quizTips.unshift(`[나만의 극복 비법] 과거 효과적이었던 "${customRecoveryAction.slice(0, 30)}${customRecoveryAction.length > 30 ? '...' : ''}" 다시 시도해보기`);
+    } else {
+      quizTips.push(`따스한 온수를 마시며 굳어 있는 신체 근육 긴장 완화하기`);
+    }
+
+    setReportText(analysisText);
+    setReportTips(quizTips);
+    setShowFullReport(false); // Default to summary view!
+
+    // Generate 3-line summary dynamically
+    let summaryLines: string[] = [];
+    if (recoveryFound && chosenPair) {
+      summaryLines = [
+        `📋 현재 한동재님은 '${quizResult.category}' 자극과 '${quizResult.physical}' 반응으로 피로를 겪는 중입니다.`,
+        `💡 과거 ${new Date(chosenPair.d1.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}에 동일 스트레스를 "${chosenPair.d2.reason}"(으)로 이겨내셨던 기적의 복구 패턴(+${chosenPair.diff}점)이 감지되었습니다.`,
+        `🌱 오늘 제안된 '${quizResult.coping}' 행동을 천천히 실천해 보시며 나만의 극복 매뉴얼을 다시 작동시킬 때입니다.`
+      ];
+    } else if (customRecoveryAction) {
+      summaryLines = [
+        `📋 현재 '${quizResult.category}' 자극으로 인해 몸에 '${quizResult.physical}' 긴장 신호가 발생해 마음이 무거운 상태입니다.`,
+        `💡 비록 직접적인 회복 공식은 없지만, 과거 나에게 최고의 미소를 안겨주었던 "${customRecoveryAction.slice(0, 30)}..." 활동을 추천해 드립니다.`,
+        `🌱 과거 성공했던 특별한 극복 활동을 작게 실천하시고, 하단의 마인드 복식호흡을 가동해 뇌 에너지를 리셋해보세요.`
+      ];
+    } else {
+      summaryLines = [
+        `📋 오늘 느끼시는 '${quizResult.category}' 영역의 자극은 몸에 '${quizResult.physical}' 신체 피로를 남기고 있습니다.`,
+        `💡 아직 기록 데이터가 부족하여 일반 사용자 평균 통계에 기초한 최적의 마인드 솔루션을 우선 제안해 드립니다.`,
+        `🌱 오늘 처방된 '${quizResult.coping}' 활동과 수면 시간 확보에 주력해 보시고, 나아진 결과를 달력에 기록해 주세요.`
+      ];
+    }
+    setReportSummary(summaryLines);
     setQuizSubmitted(true);
+
+    // Save generated report to history permanently!
+    moodService.addAnalysisHistory({
+      answers: quizResult,
+      analysisText: analysisText,
+      actionTips: quizTips,
+      moodScore: estimated,
+      date: selectedDate.toISOString() // Time travel chosen date!
+    });
+
+    fetchAnalysisDates(); // Instant calendar icon update!
+
+    let welcomeText = `안녕하세요! 당신만을 위한 기래프 AI 마음 해결사입니다. 🦒✨\n\n오늘 당신의 마음 영역은 **'${quizResult.category}'**이며, 감정의 강도는 **'${quizResult.intensity}'**로 느껴지고 있군요. 몸에서는 **'${quizResult.physical}'** 반응이 와닿아 많이 지쳤을 텐데, **'${quizResult.coping}'** 처방으로 해결 방향을 잡으려 하시는군요.\n\n`;
+
+    if (recoveryFound && chosenPair) {
+      welcomeText += `제 데이터망에 감지된 소중한 비결이 하나 있어요! 과거 한동재님이 비슷한 상황으로 힘들어하실 때 **"${chosenPair.d2.reason}"**을(를) 통해 슬기롭게 회복하셨던 성공 기억이 있더라고요. 🌸\n\n오늘 이 성공 열쇠를 기반으로 제작된 'AI 심층 처방 분석'을 아래 정리해 두었으니 확인해 주세요. 저와 더 편안하고 사소한 마음 이야기를 나누고 싶다면 무엇이든 물어보세요!`;
+    } else if (customRecoveryAction) {
+      welcomeText += `기록을 분석해 보니 한동재님의 마음에 웃음을 주었던 **"${customRecoveryAction.slice(0, 40)}"**의 추억이 있더라고요. 오늘 그 행복 조각을 기반으로 마음을 케어할 수 있는 심층 리포트를 완성해 두었습니다.\n\n저와 더 대화를 나누며 피로를 털어내고 싶다면 무엇이든 편하게 이야기해 주세요. 제가 따뜻하게 들어 드릴게요. 🌸`;
+    } else {
+      welcomeText += `구체적으로 털어놓아 주신 _"${quizResult.subjective || '마음이 조금 지쳐요.'}"_ 상황을 바탕으로, 아래에 **'AI 심층 처방 분석'**과 **'맞춤형 대처법'**을 정리해 두었습니다. 저와 함께 더 편안한 이야기를 나눠보고 싶다면 무엇이든 질문해 주세요. 제가 따뜻하게 들어 드릴게요. 🌸`;
+    }
 
     // Dynamic initial chatbot messages customized with user quiz answers
     setChatMessages([
       {
         id: 'welcome-counselor',
         sender: 'bot',
-        text: `안녕하세요! 당신만을 위한 기래프 AI 마음 해결사입니다. 🦒✨\n\n오늘 당신의 마음 영역은 **'${quizResult.category}'**이며, 감정의 강도는 **'${quizResult.intensity}'**로 느껴지고 있군요. 몸에서는 **'${quizResult.physical}'** 반응이 와닿아 많이 지쳤을 텐데, **'${quizResult.coping}'** 처방으로 해결 방향을 잡으려 하시는군요.\n\n구체적으로 털어놓아 주신 _"${quizResult.subjective || '마음이 조금 지쳐요.'}"_ 상황을 바탕으로, 아래에 **'AI 심층 처방 분석'**과 **'맞춤형 대처법'**을 정리해 두었습니다. 저와 함께 더 편안한 이야기를 나눠보고 싶다면 무엇이든 질문해 주세요. 제가 따뜻하게 들어 드릴게요. 🌸`,
+        text: welcomeText,
         timestamp: new Date(),
       } as any
     ]);
@@ -216,6 +431,91 @@ export default function AnalysisPage() {
   const physicals = ['가슴 긴장/두근거림 💓', '몸이 축 처지고 피로함 💤', '가볍고 활기 넘침 ✨', '차분하고 호흡이 편안함 🌾'];
   const copings = ['다른 일로 신경 환기하기 🪁', '사람들과 소통하며 풀기 💬', '조용히 혼자만의 휴식 🧘', '감정 흐름에 몸 맡기기 🍃'];
 
+  const renderCalendar = () => {
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const days: React.ReactNode[] = [];
+    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10 w-full" />);
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const date = new Date(currentYear, currentMonth, d);
+      const dStr = date.toLocaleDateString('ko-KR');
+      const hasReport = analysisDates[dStr];
+      const isSelected = selectedDate.toDateString() === date.toDateString();
+      const isToday = new Date().toDateString() === date.toDateString();
+      const isFuture = date > new Date();
+
+      days.push(
+        <button
+          key={`day-${d}`}
+          type="button"
+          disabled={isFuture}
+          onClick={() => selectDate(date)}
+          className={`h-10 w-full rounded-xl flex flex-col items-center justify-center relative transition-all duration-300 active:scale-90 ${
+            isFuture ? 'opacity-20 cursor-not-allowed' : 'cursor-pointer'
+          } ${
+            isSelected
+              ? 'border border-[var(--color-primary)] font-bold text-white bg-[var(--color-primary)]/20 shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.3)]'
+              : isToday
+              ? 'border border-zinc-700 font-bold text-[var(--color-primary)] bg-zinc-800/10'
+              : 'hover:bg-zinc-800/40 border border-transparent'
+          }`}
+        >
+          <span className={`text-[10px] ${isFuture ? 'text-zinc-700' : isSelected ? 'text-white' : isToday ? 'text-[var(--color-primary)]' : 'text-zinc-400'}`}>
+            {d}
+          </span>
+          {hasReport && (
+            <span className="text-[8px] text-[var(--color-primary)] absolute -bottom-0.5 filter drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)] animate-pulse">
+              📋
+            </span>
+          )}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2 p-4 rounded-3xl border border-white/5 bg-zinc-900/10 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+            진단 날짜 선택: {currentYear}년 {currentMonth + 1}월
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="p-1.5 rounded-lg bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white cursor-pointer active:scale-95 animate-transition"
+            >
+              <ChevronLeft className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="p-1.5 rounded-lg bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white cursor-pointer active:scale-95 animate-transition"
+            >
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-1 mt-2">
+          {weekDays.map((wd) => (
+            <div key={wd} className="text-[10px] text-zinc-600 font-bold text-center py-1">
+              {wd}
+            </div>
+          ))}
+          {days}
+        </div>
+        <div className="text-[8px] text-zinc-500 font-semibold px-1 mt-1 flex items-center gap-1">
+          <span>※ 과거의 날짜를 선택하여 당시의 마음 처방 보고서를 자가진단할 수 있습니다. (📋 아이콘은 이미 진단된 날짜입니다)</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       {/* Header */}
@@ -233,13 +533,16 @@ export default function AnalysisPage() {
           <p className="text-[10px] font-bold text-zinc-500">진단 차트를 가져오는 중...</p>
         </div>
       ) : !quizSubmitted ? (
-        /* Quiz Survey Interface */
-        <form onSubmit={handleQuizSubmit} className="flex flex-col gap-5">
-          <div className="p-5 rounded-3xl border border-white/5 bg-zinc-900/10 backdrop-blur-sm flex flex-col gap-4">
-            <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-zinc-900 pb-2">
-              <Compass className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
-              오늘의 기분 자가진단
-            </h3>
+        /* Quiz Survey Interface with Cozy Calendar Selection */
+        <div className="flex flex-col gap-5">
+          {renderCalendar()}
+
+          <form onSubmit={handleQuizSubmit} className="flex flex-col gap-5">
+            <div className="p-5 rounded-3xl border border-white/5 bg-zinc-900/10 backdrop-blur-sm flex flex-col gap-4">
+              <h3 className="text-xs font-bold text-white flex items-center gap-1.5 border-b border-zinc-900 pb-2">
+                <Compass className="w-4 h-4 text-[var(--color-primary)] animate-pulse" />
+                {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일의 마음 자가진단
+              </h3>
 
             {/* Q1: Category */}
             <div className="flex flex-col gap-2">
@@ -356,6 +659,7 @@ export default function AnalysisPage() {
             기래프 AI 진단 및 해결책 받기
           </button>
         </form>
+      </div>
       ) : (
         /* Dynamic Consolidated Analysis & Solution Block */
         <div className="flex flex-col gap-6 animate-fade-in">
@@ -375,33 +679,52 @@ export default function AnalysisPage() {
             </div>
 
             {/* Threshold condition content display */}
-            {isEarlyStage ? (
-              /* Early Stage Analysis (< 5 logs) */
-              <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
+              {isEarlyStage ? (
                 <div className="px-3 py-2 rounded-xl bg-amber-950/20 border border-amber-900/30 text-amber-400 text-[10px] font-bold">
                   ⚠️ 누적 감정 데이터가 부족해 현재 {logs.length}개 / 5개, 보편적인 대규모 사용자 평균 임상 상황을 대입한 일반 분석을 제공해 드립니다.
                 </div>
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-medium">
-                  오늘 느끼신 <strong>'{answers.category}'</strong> 영역의 자극은 평균 사용자들이 일상에서 겪는 피로 유발 지수의 68%를 차지하는 주원인입니다. 몸에서 나타난 <strong>'{answers.physical}'</strong> 반응은 뇌가 깊은 피로 상태에 빠져 근육의 항상성을 회복하고자 하는 자연적인 구조 신호입니다.
-                </p>
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-medium">
-                  평균적으로 이럴 때 사용자들이 가장 빠른 회복을 보인 솔루션은 <strong>'{answers.coping}'</strong>과 함께, 따뜻한 수분 섭취와 스마트폰 차단이었습니다. 스스로의 마음에 과도한 질책을 하지 마시고, 가볍게 눈을 감고 마음의 짐을 잠시 내려놓으세요.
-                </p>
-              </div>
-            ) : (
-              /* Advanced Stage Analysis (>= 5 logs) */
-              <div className="flex flex-col gap-3">
+              ) : (
                 <div className="px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 text-[10px] font-bold">
                   ✓ 축적된 {logs.length}개의 정밀 감정 조각을 분석해 한동재님만을 위한 맞춤형 딥케어 분석이 완료되었습니다.
                 </div>
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-medium">
-                  한동재님의 과거 마음 데이터 통계에 따르면 기분 평균점수는 <strong>{averageMood}점</strong> 대를 걷고 있습니다. 주로 <strong>'{answers.category}'</strong> 관련 로그가 올라왔을 때 평소보다 감정 변동성이 약 24% 크게 나타났으며, 특히 몸이 <strong>'{answers.physical}'</strong>할 때 기래프의 충전 속도가 가장 느려진 이력이 있습니다.
-                </p>
-                <p className="text-[11px] text-zinc-300 leading-relaxed font-medium">
-                  하지만 놀랍게도 과거 <strong>'{answers.coping}'</strong>과 관련된 자발적 힐링 루틴을 시도했을 때, 기분 점수가 평균 15점 이상 조기 극복되었던 강력한 자정 패턴이 포착되었습니다! 오늘 주관식으로 털어놓아 주신 <em>&quot;{answers.subjective}&quot;</em> 일은 일시적인 흐름일 뿐, 당신의 회복력은 이미 충분히 입증되어 있습니다.
-                </p>
-              </div>
-            )}
+              )}
+              
+              {!showFullReport ? (
+                /* 3-Line Summary View */
+                <div className="flex flex-col gap-2.5">
+                  <ul className="flex flex-col gap-2 text-[11px] text-zinc-300 font-semibold leading-relaxed">
+                    {reportSummary.map((line, idx) => (
+                      <li key={idx} className="flex gap-2 items-start bg-zinc-950/20 p-2.5 rounded-2xl border border-white/5 shadow-sm">
+                        <span className="shrink-0 text-xs">{line.slice(0, 2)}</span>
+                        <span>{line.slice(2)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullReport(true)}
+                    className="w-full py-2 px-3 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 hover:bg-zinc-800 text-[10px] font-black text-zinc-300 hover:text-white rounded-2xl cursor-pointer text-center transition-all mt-1 active:scale-95 flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <span>기래프 AI 심층 처방 상세보기 ▾</span>
+                  </button>
+                </div>
+              ) : (
+                /* Full Detailed Report View */
+                <div className="flex flex-col gap-3.5">
+                  <p className="text-[11px] text-zinc-300 leading-relaxed font-medium whitespace-pre-wrap bg-zinc-950/20 p-3.5 rounded-2xl border border-white/5 shadow-sm">
+                    {reportText}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullReport(false)}
+                    className="w-full py-2 px-3 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 hover:bg-zinc-800 text-[10px] font-black text-zinc-300 hover:text-white rounded-2xl cursor-pointer text-center transition-all mt-1 active:scale-95 flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <span>처방 리포트 요약하여 보기 ▴</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Checklist solutions */}
             <div className="mt-2 border-t border-zinc-900 pt-3.5 flex flex-col gap-2.5">
@@ -410,18 +733,12 @@ export default function AnalysisPage() {
                 기래프 처방 행동 솔루션
               </span>
               <ul className="flex flex-col gap-1.5 text-[10px] text-zinc-400 leading-normal font-semibold">
-                <li className="flex items-start gap-1.5">
-                  <span className="text-[var(--color-primary)]">•</span>
-                  <span><strong>{answers.coping}</strong> 기법 즉각 10분 이상 돌입하기</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-[var(--color-primary)]">•</span>
-                  <span>따스한 온수가 담긴 머그컵 감싸며 체온 1도 상승시키기</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <span className="text-[var(--color-primary)]">•</span>
-                  <span>하단에 준비된 4초 마인드 호흡을 천천히 3회 완수하기</span>
-                </li>
+                {reportTips.map((tip, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="text-[var(--color-primary)]">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
