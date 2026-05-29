@@ -1,90 +1,109 @@
-# 🦒 기래프 (Giraffe) - Backend
+# 🦒 기래프 (Giraph) - Backend & Cloud Database
 
-> **"매일의 기분 점수를 기록하고 AI 분석 처방전 및 시간여행 복구 스캔을 제어하는 '기래프'의 백엔드 & PostgreSQL 클라우드 데이터베이스 저장소입니다."**
+> **경북대학교 학우들의 소중한 감정 일기와 개인정보를 철저히 수호하는 Supabase 클라우드 기반 서버리스 백엔드**
+> 
+> 
+> ❝ 데이터베이스 설계도와 보안 가이드라인 ❞
+> 
+> **자체 서버 구축의 비효율성을 완벽하게 날려버리다!** 단 한 줄의 자체 서버 코드 없이 Supabase와 PostgreSQL RLS 보안 기술로 설계된 초고효율 백엔드 시스템입니다👍
+> 
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Supabase-v2-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white" alt="JSON" />
+---
+
+## 🧭 프로젝트 개요
+감정 일기와 마음 케어 진단 기록은 사용자의 개인정보 중 가장 민감하고 조심스러운 정보에 속합니다. 
+기존의 백엔드 시스템들은:
+- ❌ **자체 서버 호스팅 비용과 부하**: 24시간 서버 컴퓨터를 구동해야 해서 자원 낭비가 심함.
+- ❌ **보안 정책의 취약성**: 데이터베이스 테이블에 별도 암호화나 세밀한 개인별 격리 자물쇠가 부재해 관리자나 해커가 유저 데이터를 엿볼 위험이 큼.
+- ❌ **배포 및 이식의 복잡성**: 서버 환경 설정, 라우팅(API) 코딩, 데이터베이스 연결 등 수십 단계의 복잡한 절차 필요.
+
+이러한 고질적인 문제들을 해소하기 위해 기래프 백엔드는 **서버리스(Serverless)** 및 **BaaS (Backend-as-a-Service)** 개념을 적극 도입하여, **Supabase 클라우드** 위에 고성능 관계형 데이터베이스 **PostgreSQL**과 강력한 개인정보 보호를 보장하는 **행 단위 보안 정책(RLS)**을 완벽히 구축했습니다.
+
+---
+
+## 🎯 프로젝트 목표
+- **서버리스 비용 최소화**: 무거운 서버 컴퓨터를 띄우지 않고 클라우드 플랫폼의 자원을 유연하게 호출하여 극도의 경제성과 속도 달성.
+- **해킹 원천 차단 (RLS)**: 데이터베이스 수준에서 사용자별로 엄격하게 칸막이를 치는 행 단위 보안 정책(Row-Level Security)을 실현하여 완벽한 사생활 수호.
+- **초고속 데이터베이스 이식성**: 단 한 장의 데이터베이스 설계도(`schema.sql`)만으로 누구나 클릭 한 번에 동일한 백엔드 환경을 즉시 배포할 수 있는 고도의 표준화 구현.
+
+---
+
+## 🛠️ 사용 기술 스택 (Tech Stack)
+
+### **Cloud Backend Platform**
+<p align="left">
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
 </p>
 
----
+- **Supabase**: 가상 서버 호스팅 및 실시간 API 자동 생성(Auto-generated REST APIs) 엔진.
 
-## ☁️ 시스템 아키텍처 개요
+### **Database & Security**
+<p align="left">
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/SQL-000000?style=for-the-badge&logo=databricks&logoColor=white" alt="SQL" />
+</p>
 
-기래프의 백엔드는 자체 인프라 구축의 비효율성을 해소하기 위해 **서버리스(Serverless)** 아키텍처를 도입하여 클라우드 상에서 유연하게 작동하며, **Supabase 클라이언트 SDK**와 관계형 데이터베이스인 **PostgreSQL**이 핵심 저장소 역할을 수행합니다.
-
-또한 오프라인 상황에서도 앱이 끊김 없이 정상 가동되는 **로컬 우선(Local-First) 하이브리드 싱크 엔진**을 탑재하여 모바일 환경에 가장 최적화되어 있습니다.
-
-```
-[모바일/웹 클라이언트 요청]
-        │
-        ├──> [Supabase SDK 유효성 및 네트워크 검사]
-        │         ├──> 통과: 실시간 Supabase Cloud DB 트랜잭션 (보안 백업)
-        │         └──> 실패: Transparent fallback ➡️ 브라우저 로컬 저장소 CRUD 수행
-```
+- **PostgreSQL**: Supabase의 메인 데이터베이스 엔진으로, 트랜잭션 무결성을 보장하고 복잡한 일기 로그의 관계형 스토리지 역할을 완벽히 수행.
+- **Row-Level Security (RLS)**: 데이터베이스 테이블에 설정하는 개인별 데이터 격리 자물쇠. 로그인한 사용자 본인의 데이터 이외에는 시스템 관리자조차 접근하지 못하도록 원천 차단하는 핵심 보안 장치.
 
 ---
 
-## 💾 데이터베이스 스키마 테이블 명세
+## 🗄️ Database 구조 (ERD & Schema)
 
-기래프 백엔드는 기분 로그와 역대 AI 처방 다이어리 데이터 정합성을 보장하기 위해 다음과 같이 2개의 핵심 테이블 구조를 관리합니다.
+### **`mood_logs` 테이블 정의**
+사용자의 일일 감정 점수 및 사유, 그리고 AI 극복 계기 데이터를 담는 주춧돌 테이블입니다.
 
-### 1. 감정 로그 테이블 (`mood_logs`)
-사용자가 작성한 당일의 기분 점수와 구체적인 하루 조각(원인)들이 기록되는 테이블입니다.
-
-| 컬럼명 | 데이터 타입 | 설명 | 제약 조건 |
-| :--- | :---: | :--- | :---: |
-| **`id`** | `UUID` / `String` | 기분 기록 고유 식별자 | **PRIMARY KEY** |
-| **`user_id`** | `UUID` | 로그인한 사용자 고유 ID | **FOREIGN KEY** (Auth) |
-| **`mood_score`** | `Integer` | 당일의 기분 점수 (0 ~ 100) | **NOT NULL** |
-| **`feeling`** | `VARCHAR` | 감정 범주 텍스트 (예: '좋음/만족함') | **NOT NULL** |
-| **`reason`** | `TEXT` | 사용자가 직접 작성한 기분의 구체적 이유 | **NOT NULL** |
-| **`change_reason`**| `TEXT` | 감정 변화의 상세 원인 세부 기술 | (선택 필드) |
-| **`created_at`** | `TIMESTAMP` | 기분 로그가 등록된 시간 정보 | **DEFAULT now()** |
-
-### 2. 처방전 히스토리 테이블 (`giraffe_analysis_history` - Local Metadata)
-시간여행 AI 자가진단을 완수한 날짜별 AI 종합 소견 및 복구 팁들이 축적되는 테이블 스키마입니다.
-
-| 필드명 | 데이터 타입 | 설명 | 제약 조건 |
-| :--- | :---: | :--- | :---: |
-| **`id`** | `String` | 처방전 고유 키 | **PRIMARY KEY** |
-| **`date`** | `TIMESTAMP` | 처방전이 기록된 특정 캘린더 날짜 | **NOT NULL** |
-| **`answers`** | `JSONB` | 자가진단 퀴즈 응답 객체 (영역, 강도, 반응, 처방 등) | **NOT NULL** |
-| **`analysisText`** | `TEXT` | 시간여행 스캔으로 융합된 AI 최종 심층 소견 텍스트 | **NOT NULL** |
-| **`actionTips`** | `JSONB` (Array) | AI 행동 조언 3선 리스트 (과거 성공 행동 포함) | **NOT NULL** |
-| **`moodScore`** | `Integer` | 당시 측정된 감정 추정 수치 | **NOT NULL** |
+| 컬럼명 | 데이터 타입 | 제약 조건 | 설명 |
+| :--- | :--- | :--- | :--- |
+| **`id`** | `UUID` | `PRIMARY KEY` | 감정 로그 기록의 고유식별자 |
+| **`user_id`** | `UUID` | `DEFAULT auth.uid()` | 기록을 작성한 로그인된 사용자의 고유 ID (보안 키) |
+| **`mood_score`** | `INTEGER` | `CHECK (0 <= score <= 100)` | 0~100 사이로 입력된 유저의 기분 수치 점수 |
+| **`feeling`** | `TEXT` | `NOT NULL` | 사용자의 핵심 감정 텍스트 (예: 우울함, 보통) |
+| **`reason`** | `TEXT` | `NOT NULL` | 감정을 느낀 구체적인 원인 일기 텍스트 |
+| **`change_reason`** | `TEXT` | `DEFAULT ''` | 기분이 5점이라도 나아진 경우 기록하는 AI 처방 극복 계기 메모 |
+| **`created_at`** | `TIMESTAMPTZ` | `DEFAULT timezone('utc', now())` | 로그가 기록된 정확한 날짜 및 타임스탬프 |
 
 ---
 
-## 🧠 시간여행 복구 스캔 핵심 알고리즘 로직
+## 🛡️ Row-Level Security (RLS) 보안 정책
 
-기래프 백엔드 브레인의 가장 강력한 특징인 **'시간여행 감정 복구 스캐너(Time-Travel Scanner)'**가 구동되는 상세 기술 논리입니다.
+기래프 백엔드의 가장 강력한 장점으로, 데이터베이스 단에서 **행 단위 보안(RLS)**을 가동하여 사용자 데이터를 타인으로부터 완벽히 보호합니다.
+
+### 📝 적용된 3대 핵심 SQL 보안 정책
+1. **데이터 생성 권한 (`INSERT`)**:
+   * *조건*: 오직 로그인하여 학생 인증을 완료한 유저 본인의 `user_id`를 가졌을 때만 새로운 행을 추가할 수 있습니다.
+2. **데이터 조회 권한 (`SELECT`)**:
+   * *조건*: `auth.uid() = user_id` 조건이 참인 행만 유저 화면에 로드됩니다. 다른 유저의 일기 기록은 API 호출을 통해 조회를 시도해도 빈 배열로 반환됩니다.
+3. **데이터 삭제 권한 (`DELETE`)**:
+   * *조건*: 오직 본인이 작성한 감정 로그의 고유 `id`에 매칭될 때만 레코드를 물리적으로 영구 파기할 수 있습니다.
+
+---
+
+## 📁 디렉토리 구조 (Directory Tree)
+백엔드 구성 파일은 상위 감싸기 폴더 없이 **백엔드 저장소 루트**에 다음과 같이 정밀하게 나누어 배포되어 있습니다.
 
 ```
-[1] 자가진단이 지정된 특정 선택일(selectedDate) 접수
-     │
-[2] created_at <= selectedDate 조건으로 역사적 기분 데이터만 메모리에 필터링 로드 (시간제약 격리)
-     │
-[3] 선택된 퀴즈 감정 영역(예: '대인관계')에 맞춰 형태소 매칭 한글 키워드 집합 로딩
-     │
-[4] 과거 로그에서 [기분 점수 <= 55] 였던 가장 힘든 고통의 날 탐색
-     │
-[5] 고통의 날 이후 3일 이내에 [기분 점수 상승폭 >= +10점]을 달성한 '마음 회복 구간' 추적
-     │
-[6] 해당 회복 성공일의 'reason' 컬럼 텍스트에서 한동재님만의 성공 비결 문장 추출
-     │
-[7] AI 처방전 본문에 융합 및 1순위 행동 솔루션 체크리스트에 동적 바인딩
+Backend/ (백엔드 저장소 루트)
+├── .env.example       # 프론트엔드가 내 데이터베이스와 접속할 때 쓰는 접속 환경변수 템플릿
+├── schema.sql         # Supabase에 붙여넣기만 하면 1초 만에 DB를 만들어주는 핵심 마이그레이션 설계도
+└── README.md          # 백엔드 데이터베이스 공식 명세서 (본 파일)
 ```
 
 ---
 
-## 🔑 프로덕션 환경 변수 및 설정 파일 (`.env`)
+## 🚀 백엔드 원격 배포 및 연결 가이드
 
-백엔드 데이터베이스 클라우드 자원을 안전하게 호출하기 위해 로컬 보안 환경 파일에 아래와 같이 실제 접속 credentials를 기재하여 Next.js 빌드 시 바인딩합니다. (보안을 위해 `.gitignore`에 자동 등록되어 레포지토리 외부 유출이 영구 방지됩니다.)
+본 저장소의 설계도를 사용해 1초 만에 백엔드를 원격 클라우드로 가동하는 순서입니다.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://icthqqocqiaqqkjvsmhm.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdGhxcW9jcWlhcXFranZzbWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODUxNDAsImV4cCI6MjA5NTM2MTE0MH0.qQ4WrTfAQg1sXeRkmujPgxHFqg5TA3Fs3xUA7tT7u0c
-```
+### 1단계: Supabase 프로젝트 생성
+1. [Supabase 공식 홈페이지](https://supabase.com/)에 접속하여 로그인합니다.
+2. **`New Project`**를 눌러 새 프로젝트를 생성하고 데이터베이스 비밀번호를 안전하게 보관합니다.
+
+### 2단계: 데이터베이스 설계도 반영
+1. 생성된 프로젝트 대시보드 좌측 메뉴에서 **`SQL Editor`**에 들어갑니다.
+2. **`New Query`**를 생성하고, 본 저장소 루트에 위치한 **`schema.sql`** 파일의 전체 코드를 복사하여 붙여넣습니다.
+3. 우측 하단의 **`Run`** 버튼을 누르면, 기래프 데이터베이스 구조와 보안 RLS 자물쇠 세팅이 1초 만에 클라우드에 자동 구축됩니다.
+
+### 3단계: 프론트엔드 연동
+1. Supabase 대시보드의 `Settings ➡️ API` 메뉴에서 `Project URL`과 `Anon Key`를 복제합니다.
+2. 본 저장소의 `.env.example` 파일을 참고하여 프론트엔드 최상위 디렉토리에 **`.env.local`** 파일을 만든 뒤 해당 열쇠 값들을 입력해 주면 기래프 앱과 클라우드 백엔드의 실시간 연동이 정상 완료됩니다!
