@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 기래프 🦒
+학생들의 마음 건강과 일상 스트레스 치유를 도울 나를 위한 나에 의한 나만의 '본인 기반 마인드케어 다이어리'
 
-## Getting Started
+---
 
-First, run the development server:
+## 팀 소개 📊
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+해달 야호~ ✌️
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+데이터 분석과 시각화에 관심 있는 학부생들이 모여, 일상의 감정을 새로운 방식으로 해석하는 팀입니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 팀원 소개 🧍‍♂️🧍‍♀️
 
-## Learn More
+- **전성호**: 팀 리더
+  -프로젝트 기획 및 발표, 전반적인 서비스 구조 설계 담당
+- **오윤성**: 백엔드 개발
+  -데이터 처리 및 서버 로직 구현 담당
+- **한동재**: 프론트엔드 개발
+  -사용자 인터페이스 및 기능 구현 담당
+- **이태영**: 프로젝트 문서화
+  -회의 기록, 발표 자료 제작 및 협업 문서 관리 담당
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 프로젝트 개요
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+AI 기술의 발전과 빠르게 변화하는 사회 속에서 현대인은 끊임없는 불안과 감정 기복을 경험한다.
+하지만 정작 자신의 감정을 정확히 인지하고 관리하는 방법은 부족하다.
 
-## Deploy on Vercel
+우리 프로젝트는 사용자의 감정 데이터를 기록·분석·시각화하여,
+단순한 “기분 기록”을 넘어 왜 그런 감정을 느끼는지 원인을 파악하고,
+과거의 나에게서 효과적이었던 해결 방법을 찾아 미래의 나에게 제안하는 AI 기반 감정 관리 서비스이다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+사용자는 자신의 기분 상태와 원인(수면, 시험기간, 인간관계, 피로감 등)을 입력하고,
+서비스는 이를 그래프로 시각화하여 감정의 흐름과 패턴을 보여준다.
+또한 특정 상황에서 효과적이었던 행동(음악, 산책, 운동, 에세이 읽기 등)을 분석하여
+비슷한 감정 상태가 다시 찾아왔을 때 맞춤형 해결책을 추천한다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+즉, 단순히 감정을 측정하는 것이 아니라
+“과거의 나와 미래의 나를 연결하여 감정을 관리하는 서비스”를 목표로 한다.
+
+---
+
+## 프로젝트 목표
+
+### 1. **감정 데이터의 시각화**
+: 사용자의 기분 변화를 그래프 형태로 기록 및 분석
+현재 감정 상태가 저점인지, 고점인지 직관적으로 확인 가능
+
+### 2. **감정 원인 분석**
+: 수면 시간, 일정, 시험기간, 인간관계 등 감정 변화의 원인 분석
+반복되는 감정 패턴과 상황 파악
+
+### 3. **개인 맞춤형 감정 솔루션 제공**
+: 과거에 효과적이었던 행동 기반 추천 제공
+예: 음악 추천, 산책, 운동, 독서 등 기분 전환 행동 제안
+
+### 4. **과거의 나와 미래의 나 연결**
+: 과거의 감정 기록과 해결 경험을 기반으로 미래의 나에게 조언 제공
+반복되는 우울감이나 불안에 대한 예방적 대응 가능
+
+### 5. **감정 관리 습관 형성**
+: 사용자가 자신의 감정을 객관적으로 이해하고 관리할 수 있도록 도움
+정신적 건강을 위한 지속 가능한 자기관리 서비스 구현
+
+---
+
+## 배경 조사 및 차별점
+
+- **기존 앱**
+  - 감정 “기록” 중심
+  - 현재 상태 분석 중심
+
+- **우리 서비스**
+  - 감정의 원인 + 해결 경험까지 학습
+  - “과거의 나”를 기반으로 “미래의 나”를 돕는 AI 감정 내비게이션
+
+---
+
+## 주요 기능
+
+### 1. **기-log** 😊😢
+: 매일의 기분 점수와 구체적인 하루 조각(원인)을 편안하게 기록하고 수정하는 감정 접수처이다.
+  - 하루 기분을 0-100점 사이의 점수로서 구체화한다.
+  - 오늘 기분의 원인을 간단하게 적는다.
+  - 월별 달력으로 내 기분을 종합적으로 파악한다.
+  - 최근 기분을 되짚어 볼 수 있는 기록란을 표시한다.
+  - 포근한 테마로 ui를 사용자가 원하는 색상으로 변경 가능하다.
+
+### 2. **기래프** 📉📈
+: 눈으로 보기 힘든 내 마음의 경계를 귀여운 기린 형상으로 시각화한다.
+- 기간별로 쌓인 내 기분 데이터를 그래프로 시각화한다. (선, 막대 변환 가능/7일, 30일, 전체 변환 가능)
+- 평균 감정 점수, 총 기록 점수, 최고 기분과 최저 기분을 한 눈에 볼 수 있게 요약한다.
+
+### 3. **분석** 🧐
+: 감정의 원인을 진단하고 과거의 내가 기분 전환에 성공했던 사례를 보관한다.
+- 내 마음을 진단하고 싶은 날짜를 달력에서 선택한다.
+- 그날의 기분을 카테고리에서 선택할 수 있다.
+- 추가적으로 적고 싶은 그날의 기분에 대한 원인을 적는다.
+- 사용자가 입력한 기분의 원인을 바탕으로 AI가 마음 해결 솔루션을 제공한다.
+
+### 4. **리포트** 📋
+: 과거와 오늘 날짜에 설정해둔 처방전 리포트들을 한 눈에 볼 수 있게 종합해둔 보관소이다.
+- 누적 진단 횟수를 볼 수 있다.
+- 이전 기록과 원인 분석 결과를 구체적으로 보고 내 기분을 객관적으로 돌아볼 수 있다.
+
+### 5. **타임캡슐** ⏱️💌
+: 과거의 내가 미래의 나에게 조언과 격려를 해주는 연결고리이다.
+- 과거의 내가 오늘의 나에게 보낸 격려 한 마디를 볼 수 있다.
+- 미래의 나에게 격려 한 마디를 남긴다.
+
+---
+
+## 사용 기술
+- Frontend : Next.js, React, TypeScript, Tailwind CSS
+- Backend : Supabase (BaaS)
+- Database : PostgreSQL
+- AI : TypeScript 기반 온디바이스 감정 회복력 스캐너 알고리즘
+- Mobile App : Capacitor (Android Native Packaging)
+
+---
+
+## 레포지토리
+
+- 프론트엔드: https://github.com/ynso-a8/Giraph/blob/frontend/README.md
+- 백엔드: https://github.com/ynso-a8/Giraph/blob/backend/README.md
+
+---
+
+## 향후 발전 방향 💹
+
+- **AI 기반 감정 분석 기능 추가** : 사용자의 감정 기록 및 키워드를 분석하여 감정 변화 패턴 자동 분석 기능 구현
+- **데이터 시각화 기능 고도화** : 주간·월간 감정 변화 그래프 및 생활 패턴 연계 분석 기능 확장
+- **맞춤형 추천 시스템 도입** : 학생뿐만 아니라 여러 사용자 감정 상태에 따라 음악, 활동, 휴식 방법 등을 추천하는 기능 추가
+- **모바일 앱 연동** : 웹 기반 서비스에서 확장하여 Android/iOS 환경에서도 편리하게 기록 및 분석 가능하도록 개발
+- **웨어러블 기기 연동** : 수면 시간, 걸음 수, 심박수 등 생체 데이터와 감정 데이터를 연계한 통합 분석 기능 구현
+- **커뮤니티 기능 확장** : 비슷한 감정 패턴 및 관심사를 가진 사용자 간 익명 소통 기능 추가
+- **실사용자 기반 데이터 구축** : 실제 사용자 데이터를 기반으로 감정 패턴 분석 정확도를 향상시키고 개인 맞춤형 서비스로 발전
+
+---

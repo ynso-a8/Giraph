@@ -104,17 +104,6 @@ export default function Home() {
     }
   };
 
-  const handleSeedData = () => {
-    try {
-      moodService.seedSampleLogs();
-      fetchLogs();
-      alert('⚡ 4월 & 5월 두 달치 감정 테스트 데이터(56개)가 로컬 브라우저에 성공적으로 주입되었습니다! 달력과 기래프 차트를 확인해 보세요! 🦒🌿');
-      setShowThemePicker(false);
-    } catch (e) {
-      console.error(e);
-      alert('데이터 주입에 실패했습니다.');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,15 +428,6 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="border-t border-zinc-900/60 mt-1.5 pt-1.5 flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={handleSeedData}
-                  className="w-full text-center py-1.5 rounded-lg text-[8px] font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all cursor-pointer"
-                >
-                  ⚡ 테스트 샘플 데이터 채우기 (4~5월)
-                </button>
-              </div>
             </div>
           )}
         </div>

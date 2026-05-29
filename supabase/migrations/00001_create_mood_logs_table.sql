@@ -1,7 +1,6 @@
 -- Create mood_logs table
 CREATE TABLE IF NOT EXISTS mood_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID, -- Optional foreign key, can be null or link to auth.users
   mood_score INTEGER NOT NULL CHECK (mood_score >= 0 AND mood_score <= 100),
   feeling TEXT NOT NULL,
   reason TEXT NOT NULL,
