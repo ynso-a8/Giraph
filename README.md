@@ -70,24 +70,6 @@ Frontend/ (프론트엔드 저장소 루트)
 └── README.md                # 프론트엔드 공식 안내서 (본 파일)
 ```
 
----
-
-## 🚀 개발 환경 구축 및 가동 가이드
-
-### 1. 로컬 웹 개발 서버 가동 방법
-```bash
-# 1. 의존성 패키지 설치
-npm install
-
-# 2. 실시간 핫리로드 로컬 웹 서버 실행
-npm run dev
-```
-
-### 2. 안드로이드 모바일 실물 디바이스 빌드 방법 (Capacitor)
-```bash
-# 1. Next.js 소스코드 정적 빌드 및 모바일 자산 동기화
-npm run mobile:build
-
 # 2. 안드로이드 스튜디오 즉각 실행 및 실물 기기 설치 테스트
 npm run mobile:open:android
 ```
