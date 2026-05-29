@@ -1,0 +1,102 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="100"
+    android:viewportWidth="100">
+
+    <!-- GIRAFFE NECK -->
+    <path
+        android:fillColor="#fbbf24"
+        android:pathData="M44,48h12c4.42,0 8,3.58 8,8v29c0,4.42 -3.58,8 -8,8h-12c-4.42,0 -8,-3.58 -8,-8v-29c0,-4.42 3.58,-8 8,-8z" />
+
+    <!-- Neck Spots -->
+    <path
+        android:fillAlpha="0.9"
+        android:fillColor="#d97706"
+        android:pathData="M50,58m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0" />
+    <path
+        android:fillAlpha="0.9"
+        android:fillColor="#d97706"
+        android:pathData="M44,74m-5,0a5,5 0 1,1 10,0a5,5 0 1,1 -10,0" />
+    <path
+        android:fillAlpha="0.9"
+        android:fillColor="#d97706"
+        android:pathData="M56,80m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+
+    <!-- HORNS -->
+    <path
+        android:strokeColor="#fbbf24"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M43,24L43,10" />
+    <path
+        android:strokeColor="#fbbf24"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M57,24L57,10" />
+    <path
+        android:fillColor="#d97706"
+        android:pathData="M43,9m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path
+        android:fillColor="#d97706"
+        android:pathData="M57,9m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+
+    <!-- EARS -->
+    <path
+        android:fillColor="#fbbf24"
+        android:pathData="M30,28Q20,22 26,34Z" />
+    <path
+        android:fillColor="#fbbf24"
+        android:pathData="M70,28Q80,22 74,34Z" />
+
+    <!-- MAIN HEAD BASE -->
+    <path
+        android:fillColor="#fbbf24"
+        android:pathData="M43,23h14c7.18,0 13,5.82 13,13v6c0,7.18 -5.82,13 -13,13h-14c-7.18,0 -13,-5.82 -13,-13v-6c0,-7.18 5.82,-13 13,-13z" />
+
+    <!-- MOUTH SNOUT BASE -->
+    <path
+        android:fillAlpha="0.95"
+        android:fillColor="#fef08a"
+        android:pathData="M40.5,42h19c3.04,0 5.5,2.46 5.5,5.5v0c0,3.04 -2.46,5.5 -5.5,5.5h-19c-3.04,0 -5.5,-2.46 -5.5,-5.5v0c0,-3.04 2.46,-5.5 5.5,-5.5z" />
+
+    <!-- BEST MOOD EXPRESSION -->
+    <!-- Eyes -->
+    <path
+        android:strokeColor="#1e293b"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M38,35Q42,29 46,35" />
+    <path
+        android:strokeColor="#1e293b"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M54,35Q58,29 62,35" />
+    <!-- Mouth -->
+    <path
+        android:fillColor="#e11d48"
+        android:pathData="M44,46Q50,54 56,46Z" />
+    <!-- Tongue -->
+    <path
+        android:fillColor="#f43f5e"
+        android:pathData="M46,47Q50,52 54,47Z" />
+    <!-- Cheeks -->
+    <path
+        android:fillAlpha="0.5"
+        android:fillColor="#f43f5e"
+        android:pathData="M34,38m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path
+        android:fillAlpha="0.5"
+        android:fillColor="#f43f5e"
+        android:pathData="M66,38m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <!-- Nose holes -->
+    <path
+        android:fillAlpha="0.8"
+        android:fillColor="#ffffff"
+        android:pathData="M45,44m-0.8,0a0.8,0.8 0 1,1 1.6,0a0.8,0.8 0 1,1 -1.6,0" />
+    <path
+        android:fillAlpha="0.8"
+        android:fillColor="#ffffff"
+        android:pathData="M55,44m-0.8,0a0.8,0.8 0 1,1 1.6,0a0.8,0.8 0 1,1 -1.6,0" />
+
+</vector>
