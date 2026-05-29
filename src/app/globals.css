@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+:root, [data-theme="lavender"] {
+  --background: #090810;
+  --foreground: #f5f3ff;
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-primary-rgb: 139, 92, 246;
+  --glow-color-1: rgba(139, 92, 246, 0.15);
+  --glow-color-2: rgba(236, 72, 153, 0.15);
+  --color-card-bg: rgba(22, 20, 39, 0.55);
+  --color-card-border: rgba(139, 92, 246, 0.2);
+  --color-text-muted: #9ca3af;
+}
+
+[data-theme="sunset"] {
+  --background: #120b08;
+  --foreground: #fffaf8;
+  --color-primary: #f97316;
+  --color-primary-hover: #ea580c;
+  --color-primary-rgb: 249, 115, 22;
+  --glow-color-1: rgba(249, 115, 22, 0.15);
+  --glow-color-2: rgba(239, 68, 68, 0.15);
+  --color-card-bg: rgba(36, 24, 20, 0.55);
+  --color-card-border: rgba(249, 115, 22, 0.2);
+  --color-text-muted: #b0a5a0;
+}
+
+[data-theme="forest"] {
+  --background: #060b08;
+  --foreground: #f4fbf7;
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-rgb: 16, 185, 129;
+  --glow-color-1: rgba(16, 185, 129, 0.15);
+  --glow-color-2: rgba(59, 130, 246, 0.15);
+  --color-card-bg: rgba(12, 27, 20, 0.55);
+  --color-card-border: rgba(16, 185, 129, 0.2);
+  --color-text-muted: #9ca19e;
+}
+
+[data-theme="milktea"] {
+  --background: #0f0c0a;
+  --foreground: #fbfbf9;
+  --color-primary: #d97706;
+  --color-primary-hover: #b45309;
+  --color-primary-rgb: 217, 119, 6;
+  --glow-color-1: rgba(217, 119, 6, 0.15);
+  --glow-color-2: rgba(251, 191, 36, 0.12);
+  --color-card-bg: rgba(33, 26, 21, 0.55);
+  --color-card-border: rgba(217, 119, 6, 0.2);
+  --color-text-muted: #aca59f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Premium Animations */
+@keyframes giraffe-bounce {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(4deg);
+  }
+}
+
+.animate-giraffe {
+  animation: giraffe-bounce 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Custom visual styling overrides */
+.border-theme {
+  border-color: var(--color-card-border);
+}
+
+.bg-theme-card {
+  background-color: var(--color-card-bg);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.text-theme-primary {
+  color: var(--color-primary);
+}
+
+/* Custom Thin Premium Horizontal Chart Scrollbar */
+.custom-chart-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+.custom-chart-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.custom-chart-scroll::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.35);
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+.custom-chart-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-primary-rgb), 0.65);
+}
+
+/* Light Mode Overrides for overall layout and elements */
+[data-theme-mode="light"] {
+  --background: #fbfbfa; /* Cozy Warm White */
+  --foreground: #1c1917; /* Soft Charcoal */
+  --color-card-bg: rgba(255, 255, 255, 0.78); /* Soft White Glass Card */
+  --color-card-border: rgba(var(--color-primary-rgb), 0.15);
+  --color-text-muted: #57534e;
+  --color-bg-slider: #e5e5e0;
+  
+  /* Background glow adjustments for light mode */
+  .fixed.top-\[-10\%\].left-\[-20\%\] {
+    background-color: rgba(var(--color-primary-rgb), 0.05) !important;
+  }
+  .fixed.bottom-\[-10\%\].right-\[-20\%\] {
+    background-color: rgba(var(--color-primary-rgb), 0.03) !important;
+  }
+  
+  /* Update card borders and backgrounds for light mode */
+  .bg-zinc-900\/10 {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+  }
+  .bg-zinc-950\/20 {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+  }
+  .bg-zinc-950\/40 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+  }
+  .bg-zinc-900\/30 {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+  .bg-zinc-950, .bg-zinc-950\/85 {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  .border-white\/5, .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  .border-zinc-800 {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+  }
+  .bg-zinc-900\/40, .bg-zinc-950\/65, .bg-gradient-to-br {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+  .border-zinc-900\/60, .border-zinc-900\/50, .border-zinc-900 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  /* Text colors */
+  .text-zinc-100 {
+    color: #1c1917 !important;
+  }
+  .text-zinc-200 {
+    color: #292524 !important;
+  }
+  .text-zinc-300 {
+    color: #44403c !important;
+  }
+  .text-zinc-400 {
+    color: #57534e !important;
+  }
+  .text-zinc-500 {
+    color: #78716c !important;
+  }
+  .text-zinc-600 {
+    color: #a8a29e !important;
+  }
+  .text-zinc-700 {
+    color: #78716c !important;
+  }
+  .text-white {
+    color: #1c1917 !important;
+  }
+  .text-zinc-50 {
+    color: #1c1917 !important;
+  }
+  
+  /* Inputs, Textareas, DatePickers */
+  textarea, input[type="text"], input[type="date"] {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #1c1917 !important;
+  }
+  
+  /* Custom Buttons */
+  button.bg-zinc-900\/60, button.bg-zinc-900\/30 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #44403c !important;
+  }
+  button.bg-zinc-900\/60:hover, button.bg-zinc-900\/30:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+    color: #1c1917 !important;
+  }
+  
+  /* Chat Interface bot bubble overrides */
+  .bg-zinc-800\/80 {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+    color: #292524 !important;
+  }
+  
+  /* Mobile Frame border glow */
+  .sm\:border {
+    border-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  .shadow-\[0_24_64_rgba\(0\,0\,0\,0\.6\)\] {
+    shadow: 0 12px 40px rgba(0,0,0,0.1) !important;
+  }
+}
+
