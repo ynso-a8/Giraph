@@ -30,7 +30,6 @@
 | 컬럼명 | 데이터 타입 | 제약 조건 | 설명 |
 | :--- | :--- | :--- | :--- |
 | **`id`** | `UUID` | `PRIMARY KEY` | 감정 로그 기록의 고유식별자 |
-| **`user_id`** | `UUID` | `DEFAULT auth.uid()` | 기록을 작성한 로그인된 사용자의 고유 ID (보안 키) |
 | **`mood_score`** | `INTEGER` | `CHECK (0 <= score <= 100)` | 0~100 사이로 입력된 유저의 기분 수치 점수 |
 | **`feeling`** | `TEXT` | `NOT NULL` | 사용자의 핵심 감정 텍스트 (예: 우울함, 보통) |
 | **`reason`** | `TEXT` | `NOT NULL` | 감정을 느낀 구체적인 원인 일기 텍스트 |
