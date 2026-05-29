@@ -8,7 +8,9 @@ import { ClipboardList, Sparkles, Send, Calendar, Clock, Heart, Award, ArrowRigh
 interface FutureLetter {
   id: string;
   text: string;
-  targetDate: string;
+  deliveryType: 'date' | 'score';
+  targetDate?: string;
+  targetScore?: number;
   createdDate: string;
   duration: string;
 }
@@ -19,9 +21,44 @@ export default function CapsulePage() {
 
   // Future letter states
   const [futureLetterInput, setFutureLetterInput] = useState('');
-  const [duration, setDuration] = useState('7'); // '7' or '30' days
+  const [deliveryType, setDeliveryType] = useState<'date' | 'score'>('date');
+  const [targetDate, setTargetDate] = useState('');
+  const [targetScore, setTargetScore] = useState(50);
   const [savedLetters, setSavedLetters] = useState<FutureLetter[]>([]);
   const [letterSaved, setLetterSaved] = useState(false);
+
+  const todayStr = useMemo(() => {
+    return new Date().toISOString().split('T')[0];
+  }, []);
+
+  const tomorrowStr = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }, []);
+
+  const checkIsOpened = (letter: FutureLetter) => {
+    const now = new Date();
+    
+    if (letter.deliveryType === 'date' && letter.targetDate) {
+      const targetDateObj = new Date(letter.targetDate);
+      return targetDateObj <= now;
+    }
+    
+    if (letter.deliveryType === 'score' && letter.targetScore !== undefined) {
+      // Find any log created on or after the letter's creation day with matching score
+      const letterDay = new Date(letter.createdDate);
+      letterDay.setHours(0, 0, 0, 0);
+
+      return logs.some(log => {
+        const logDay = new Date(log.created_at);
+        logDay.setHours(0, 0, 0, 0);
+        return logDay >= letterDay && log.mood_score === letter.targetScore;
+      });
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +71,11 @@ export default function CapsulePage() {
         if (stored) {
           setSavedLetters(JSON.parse(stored));
         }
+
+        // Set default target date to 7 days from now
+        const defaultDate = new Date();
+        defaultDate.setDate(defaultDate.getDate() + 7);
+        setTargetDate(defaultDate.toISOString().split('T')[0]);
       } catch (e) {
         console.error(e);
       } finally {
@@ -65,16 +107,38 @@ export default function CapsulePage() {
     e.preventDefault();
     if (!futureLetterInput.trim()) return;
 
-    const days = parseInt(duration);
-    const target = new Date();
-    target.setDate(target.getDate() + days);
+    let targetDateValue: string | undefined = undefined;
+    let targetScoreValue: number | undefined = undefined;
+    let durationText = '';
+
+    if (deliveryType === 'date') {
+      if (!targetDate) return;
+      const target = new Date(targetDate);
+      // Set to end of target day (23:59:59) so it is opened on that day
+      target.setHours(23, 59, 59, 999);
+      targetDateValue = target.toISOString();
+
+      const now = new Date();
+      const diffTime = target.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      durationText = `${diffDays}일 뒤`;
+      if (diffDays === 0) durationText = '오늘';
+      else if (diffDays === 7) durationText = '1주일 뒤';
+      else if (diffDays === 30) durationText = '1달 뒤';
+    } else {
+      targetScoreValue = targetScore;
+      durationText = `${targetScore}점 매칭`;
+    }
 
     const newLetter: FutureLetter = {
       id: Math.random().toString(),
       text: futureLetterInput,
-      targetDate: target.toISOString(),
+      deliveryType,
+      targetDate: targetDateValue,
+      targetScore: targetScoreValue,
       createdDate: new Date().toISOString(),
-      duration: days === 7 ? '1주일 뒤' : '1달 뒤',
+      duration: durationText,
     };
 
     const updated = [...savedLetters, newLetter];
@@ -83,6 +147,14 @@ export default function CapsulePage() {
 
     setFutureLetterInput('');
     setLetterSaved(true);
+    
+    // Reset inputs
+    setDeliveryType('date');
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 7);
+    setTargetDate(defaultDate.toISOString().split('T')[0]);
+    setTargetScore(50);
+
     setTimeout(() => setLetterSaved(false), 3000);
   };
 
@@ -223,46 +295,151 @@ export default function CapsulePage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between border-t border-zinc-900 pt-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-bold text-zinc-500">배송 기간:</span>
-                  <div className="flex bg-zinc-900/60 p-0.5 rounded-lg border border-zinc-800/80">
-                    <button
-                      type="button"
-                      onClick={() => setDuration('7')}
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition-all ${
-                        duration === '7' ? 'bg-[var(--color-primary)] text-white' : 'text-zinc-500'
-                      }`}
-                    >
-                      1주일 뒤
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDuration('30')}
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition-all ${
-                        duration === '30' ? 'bg-[var(--color-primary)] text-white' : 'text-zinc-500'
-                      }`}
-                    >
-                      1달 뒤
-                    </button>
-                  </div>
+              <div className="flex flex-col gap-3.5 border-t border-zinc-900 pt-3.5">
+                <span className="text-[10px] font-bold text-zinc-500">배송 방식 선택:</span>
+                <div className="grid grid-cols-2 p-1 bg-zinc-900/60 rounded-2xl border border-zinc-800/80">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryType('date')}
+                    className={`py-2 text-[10px] font-bold rounded-xl transition-all cursor-pointer text-center ${
+                      deliveryType === 'date'
+                        ? 'bg-[var(--color-primary)] text-white shadow-md'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    📅 특정 날짜에 도착
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryType('score')}
+                    className={`py-2 text-[10px] font-bold rounded-xl transition-all cursor-pointer text-center ${
+                      deliveryType === 'score'
+                        ? 'bg-[var(--color-primary)] text-white shadow-md'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    🦒 특정 점수 매칭
+                  </button>
                 </div>
 
-                <button
-                  type="submit"
-                  className="py-2 px-4 rounded-xl font-bold text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  미래로 발송
-                  <ArrowRight className="w-3 h-3" />
-                </button>
+                {/* Conditional Inputs based on deliveryType */}
+                {deliveryType === 'date' ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                      <span className="text-[10px] font-bold text-zinc-500 shrink-0">도착 예정일:</span>
+                      <div className="relative flex-1 sm:flex-none">
+                        <input
+                          type="date"
+                          value={targetDate}
+                          min={todayStr}
+                          onChange={(e) => setTargetDate(e.target.value)}
+                          required={deliveryType === 'date'}
+                          className="w-full text-[10px] font-bold px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/20 text-zinc-200 focus:outline-none focus:border-[var(--color-primary)] transition-colors cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto py-2 px-4 rounded-xl font-bold text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                    >
+                      미래로 발송
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3.5 animate-fade-in">
+                    <div className="flex flex-col gap-1.5 bg-zinc-900/5 p-3 rounded-2xl border border-white/5">
+                      <div className="flex justify-between items-center text-[9px] font-bold">
+                        <span className="text-zinc-500 font-semibold">배송 해제 기분 점수:</span>
+                        <span className="text-[var(--color-primary)]">{targetScore}점</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={targetScore}
+                        onChange={(e) => setTargetScore(Number(e.target.value))}
+                        className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-zinc-800 focus:outline-none"
+                        style={{
+                          background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${targetScore}%, #27272a ${targetScore}%, #27272a 100%)`,
+                          accentColor: 'var(--color-primary)',
+                        }}
+                      />
+                      <div className="flex justify-between text-[8px] text-zinc-600 font-medium">
+                        <span>우울 0점</span>
+                        <span>보통 50점</span>
+                        <span>행복 100점</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 px-4 rounded-xl font-bold text-[10px] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      미래로 발송
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {letterSaved && (
                 <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-900/30 text-emerald-400 text-[10px] font-bold animate-pulse text-center">
-                  📮 편지가 타임박스에 잠겼습니다! 지정된 시간에 활성화됩니다.
+                  📮 편지가 타임박스에 잠겼습니다! 지정된 조건에 맞춰 활성화됩니다.
                 </div>
               )}
             </form>
+
+            {/* Locked letters list */}
+            {savedLetters.length > 0 && (
+              <div className="flex flex-col gap-2.5 mt-4 border-t border-zinc-900 pt-3">
+                <span className="text-[10px] font-bold text-zinc-500">전송 대기 중인 미래 편지 ({savedLetters.length}개)</span>
+                <div className="flex flex-col gap-3.5 max-h-[280px] overflow-y-auto pr-1 no-scrollbar">
+                  {savedLetters.map((letter) => {
+                    const isOpened = checkIsOpened(letter);
+                    return (
+                      <div key={letter.id} className="p-3.5 rounded-2xl border border-white/5 bg-zinc-900/10 backdrop-blur-sm flex flex-col gap-2.5 transition-all duration-300">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">📮</span>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-zinc-300">
+                                {isOpened ? '도착 완료! 🔓' : `${letter.duration} 도착 예정 🔒`}
+                              </span>
+                              <p className="text-[8px] text-zinc-500 font-semibold mt-0.5">
+                                발송일: {new Date(letter.createdDate).toLocaleDateString('ko-KR')}
+                                {letter.targetDate && ` | 도착일: ${new Date(letter.targetDate).toLocaleDateString('ko-KR')}`}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                            isOpened ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800/80 text-zinc-400'
+                          }`}>
+                            {isOpened ? '개봉 가능' : '보류 중'}
+                          </span>
+                        </div>
+
+                        {/* Lock / Unlocked details */}
+                        {isOpened ? (
+                          <div className="p-3 bg-zinc-950/60 rounded-xl border border-emerald-500/10 text-zinc-300 font-medium text-[11px] leading-relaxed select-text animate-fade-in">
+                            💌 &quot;{letter.text}&quot;
+                          </div>
+                        ) : (
+                          <div className="text-[8px] text-zinc-500 font-semibold bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-900/60 leading-relaxed">
+                            {letter.deliveryType === 'score' ? (
+                              <span>🔒 미래에 당일 기분 점수를 <b>{letter.targetScore}점</b>으로 등록하면 편지가 개봉됩니다.</span>
+                            ) : (
+                              <span>🔒 지정된 날짜({new Date(letter.targetDate!).toLocaleDateString('ko-KR')})가 되면 자동으로 개봉됩니다.</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section 3: AI encouraging letter from future self */}

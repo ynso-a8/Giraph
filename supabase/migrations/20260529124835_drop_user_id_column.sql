@@ -1,0 +1,1 @@
+ALTER TABLE mood_logs DROP COLUMN IF EXISTS user_id;
