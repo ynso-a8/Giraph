@@ -1,4 +1,4 @@
-앱 사용해보기: https://giraph.vercel.app/
+배포 링크: https://giraph.vercel.app/
 
 # 기래프 🦒
 학생들의 마음 건강과 일상 스트레스 치유를 도울 나를 위한 나에 의한 나만의 '본인 기반 마인드케어 다이어리'
