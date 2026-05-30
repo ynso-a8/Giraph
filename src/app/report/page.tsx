@@ -4,18 +4,77 @@ import React, { useState, useEffect } from 'react';
 import { moodService, AnalysisHistory, getMoodState } from '@/lib/moodService';
 import GiraffeFace from '@/components/GiraffeFace';
 import { ClipboardList, Calendar, Trash2, ChevronDown, ChevronUp, CheckSquare, Sparkles, BookOpen } from 'lucide-react';
+import { SAMPLE_HISTORY } from '@/lib/sampleLogs';
 
 export default function ReportPage() {
   const [history, setHistory] = useState<AnalysisHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFullReportMap, setShowFullReportMap] = useState<Record<string, boolean>>({});
+  const [hasTestData, setHasTestData] = useState(false);
 
   useEffect(() => {
     fetchHistory();
+    
+    const checkTestData = () => {
+      const hasTest = localStorage.getItem('has_analysis_test_data') === 'true';
+      setHasTestData(hasTest);
+    };
+    checkTestData();
+
     window.addEventListener('storage', fetchHistory);
-    return () => window.removeEventListener('storage', fetchHistory);
+    window.addEventListener('storage', checkTestData);
+    return () => {
+      window.removeEventListener('storage', fetchHistory);
+      window.removeEventListener('storage', checkTestData);
+    };
   }, []);
+
+  const handleCreateTestData = () => {
+    // 1. Read current analysis history
+    const currentHistoryJson = localStorage.getItem('giraffe_analysis_history');
+    const currentHistory = currentHistoryJson ? JSON.parse(currentHistoryJson) : [];
+    
+    // 2. Filter out any existing sample history logs to prevent duplicates
+    const sampleIds = new Set(SAMPLE_HISTORY.map(h => h.id));
+    const userHistory = currentHistory.filter((h: any) => !sampleIds.has(h.id));
+    
+    // 3. Merge SAMPLE_HISTORY with userHistory
+    const newHistory = [...SAMPLE_HISTORY, ...userHistory];
+    
+    // 4. Save merged history
+    localStorage.setItem('giraffe_analysis_history', JSON.stringify(newHistory));
+    localStorage.setItem('has_analysis_test_data', 'true');
+    setHasTestData(true);
+    fetchHistory();
+    // Dispatch storage event to notify other components/pages of data updates
+    window.dispatchEvent(new Event('storage'));
+    alert('자가진단 및 마음처방 dummy 데이터 2개가 성공적으로 생성되었습니다! 기존 작성하신 데이터도 유지됩니다. 🦒✨');
+  };
+
+  const handleDeleteTestData = () => {
+    if (confirm('테스트 데이터를 삭제하시겠습니까? 기존에 직접 진단하신 데이터는 유지됩니다.')) {
+      const currentHistoryJson = localStorage.getItem('giraffe_analysis_history');
+      const currentHistory = currentHistoryJson ? JSON.parse(currentHistoryJson) : [];
+      
+      // Filter out sample history logs
+      const sampleIds = new Set(SAMPLE_HISTORY.map(h => h.id));
+      const remainingHistory = currentHistory.filter((h: any) => !sampleIds.has(h.id));
+      
+      if (remainingHistory.length > 0) {
+        localStorage.setItem('giraffe_analysis_history', JSON.stringify(remainingHistory));
+      } else {
+        localStorage.removeItem('giraffe_analysis_history');
+      }
+      
+      localStorage.setItem('has_analysis_test_data', 'false');
+      setHasTestData(false);
+      fetchHistory();
+      // Dispatch storage event to notify other components/pages of data updates
+      window.dispatchEvent(new Event('storage'));
+      alert('자가진단 및 마음처방 데이터가 삭제되었습니다.');
+    }
+  };
 
   const fetchHistory = () => {
     try {
@@ -89,12 +148,35 @@ export default function ReportPage() {
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
-        <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
-          기래프 마음 진단소
-        </span>
-        <h1 className="text-lg font-black text-white tracking-tight">마음 처방 일지</h1>
-        <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가진단을 통해 처방받았던 AI 마음 보고서들이 날짜별로 보관됩니다.</p>
+      <div className="flex justify-between items-end border-b border-white/5 pb-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
+            기래프 마음 진단소
+          </span>
+          <h1 className="text-lg font-black text-white tracking-tight">마음 처방 일지</h1>
+          <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가진단을 통해 처방받았던 AI 마음 보고서들이 날짜별로 보관됩니다.</p>
+        </div>
+
+        {/* Test Data Controller for Analysis History */}
+        <div className="flex items-center select-none">
+          {hasTestData ? (
+            <button
+              type="button"
+              onClick={handleDeleteTestData}
+              className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              🗑️ 테스트 데이터 삭제
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreateTestData}
+              className="px-3 py-1.5 rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              ⚡ 테스트 데이터 생성
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
