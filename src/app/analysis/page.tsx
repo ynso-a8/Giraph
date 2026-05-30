@@ -196,10 +196,19 @@ export default function AnalysisPage() {
     return () => clearInterval(timer);
   }, [breathingState]);
 
-  // Chatbot auto scroll
+  // Chatbot auto scroll: only scroll when user has sent messages (length > 1) or is typing
   useEffect(() => {
-    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatMessages.length > 1 || chatIsTyping) {
+      chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatMessages, chatIsTyping]);
+
+  // Scroll to top of the page when quiz is submitted
+  useEffect(() => {
+    if (quizSubmitted) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [quizSubmitted]);
 
   const handleStartBreathing = () => {
     setBreathingState('inhale');
