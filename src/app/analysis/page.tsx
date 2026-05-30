@@ -78,13 +78,13 @@ export default function AnalysisPage() {
     };
     fetchLogs();
 
-    const checkBackup = () => {
-      const backupExists = !!localStorage.getItem('giraffe_analysis_history_backup');
-      setHasTestData(backupExists);
+    const checkTestData = () => {
+      const hasTest = localStorage.getItem('has_analysis_test_data') === 'true';
+      setHasTestData(hasTest);
     };
-    checkBackup();
-    window.addEventListener('storage', checkBackup);
-    return () => window.removeEventListener('storage', checkBackup);
+    checkTestData();
+    window.addEventListener('storage', checkTestData);
+    return () => window.removeEventListener('storage', checkTestData);
   }, []);
 
   const fetchAnalysisDates = () => {
@@ -130,32 +130,48 @@ export default function AnalysisPage() {
   };
 
   const handleCreateTestData = () => {
-    // 1. Back up current analysis history
-    const currentHistory = localStorage.getItem('giraffe_analysis_history');
-    localStorage.setItem('giraffe_analysis_history_backup', currentHistory || '[]');
-    // 2. Overwrite with SAMPLE_HISTORY
-    localStorage.setItem('giraffe_analysis_history', JSON.stringify(SAMPLE_HISTORY));
+    // 1. Read current analysis history
+    const currentHistoryJson = localStorage.getItem('giraffe_analysis_history');
+    const currentHistory = currentHistoryJson ? JSON.parse(currentHistoryJson) : [];
+    
+    // 2. Filter out any existing sample history logs to prevent duplicates
+    const sampleIds = new Set(SAMPLE_HISTORY.map(h => h.id));
+    const userHistory = currentHistory.filter((h: any) => !sampleIds.has(h.id));
+    
+    // 3. Merge SAMPLE_HISTORY with userHistory (SAMPLE_HISTORY first so they show up on top/bottom)
+    const newHistory = [...SAMPLE_HISTORY, ...userHistory];
+    
+    // 4. Save merged history
+    localStorage.setItem('giraffe_analysis_history', JSON.stringify(newHistory));
+    localStorage.setItem('has_analysis_test_data', 'true');
     setHasTestData(true);
     fetchAnalysisDates();
     // Dispatch storage event to notify other components/pages of data updates
     window.dispatchEvent(new Event('storage'));
-    alert('자가진단 및 마음처방 dummy 데이터 2개가 성공적으로 생성되었습니다! 🦒✨');
+    alert('자가진단 및 마음처방 dummy 데이터 2개가 성공적으로 생성되었습니다! 기존 작성하신 데이터도 유지됩니다. 🦒✨');
   };
 
   const handleDeleteTestData = () => {
-    if (confirm('테스트 데이터를 삭제하고 이전 상태로 복구하시겠습니까?')) {
-      const backup = localStorage.getItem('giraffe_analysis_history_backup');
-      if (backup) {
-        localStorage.setItem('giraffe_analysis_history', backup);
-        localStorage.removeItem('giraffe_analysis_history_backup');
+    if (confirm('테스트 데이터를 삭제하시겠습니까? 기존에 직접 진단하신 데이터는 유지됩니다.')) {
+      const currentHistoryJson = localStorage.getItem('giraffe_analysis_history');
+      const currentHistory = currentHistoryJson ? JSON.parse(currentHistoryJson) : [];
+      
+      // Filter out sample history logs
+      const sampleIds = new Set(SAMPLE_HISTORY.map(h => h.id));
+      const remainingHistory = currentHistory.filter((h: any) => !sampleIds.has(h.id));
+      
+      if (remainingHistory.length > 0) {
+        localStorage.setItem('giraffe_analysis_history', JSON.stringify(remainingHistory));
       } else {
         localStorage.removeItem('giraffe_analysis_history');
       }
+      
+      localStorage.setItem('has_analysis_test_data', 'false');
       setHasTestData(false);
       fetchAnalysisDates();
       // Dispatch storage event to notify other components/pages of data updates
       window.dispatchEvent(new Event('storage'));
-      alert('자가진단 및 마음처방 데이터가 삭제되고 원래 기록으로 정상 복구되었습니다.');
+      alert('자가진단 및 마음처방 데이터가 삭제되었습니다.');
     }
   };
 

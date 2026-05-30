@@ -72,9 +72,9 @@ export default function Home() {
     setIsDemo(moodService.isDemoMode());
     fetchLogs();
 
-    // Check if test data backup exists to determine initial state
-    const backupExists = !!localStorage.getItem('mood_logs_backup');
-    setHasTestData(backupExists);
+    // Check if test data flag is true
+    const hasTestLogs = localStorage.getItem('has_mood_logs_test_data') === 'true';
+    setHasTestData(hasTestLogs);
   }, []);
 
   const changeTheme = (themeId: string) => {
@@ -112,32 +112,47 @@ export default function Home() {
 
   const handleCreateTestData = () => {
     // 1. Read current logs in local storage
-    const currentLogs = localStorage.getItem('mood_logs_local');
-    // 2. Save backup
-    localStorage.setItem('mood_logs_backup', currentLogs || '[]');
-    // 3. Overwrite local logs with static CSV sample logs
-    localStorage.setItem('mood_logs_local', JSON.stringify(SAMPLE_LOGS));
+    const currentLogsJson = localStorage.getItem('mood_logs_local');
+    const currentLogs = currentLogsJson ? JSON.parse(currentLogsJson) : [];
+    
+    // 2. Filter out any existing sample logs to prevent duplicates
+    const sampleIds = new Set(SAMPLE_LOGS.map(log => log.id));
+    const userLogs = currentLogs.filter((log: any) => !sampleIds.has(log.id));
+    
+    // 3. Merge SAMPLE_LOGS with userLogs (SAMPLE_LOGS first so they populate the history)
+    const newLogs = [...SAMPLE_LOGS, ...userLogs];
+    
+    // 4. Save merged logs
+    localStorage.setItem('mood_logs_local', JSON.stringify(newLogs));
+    localStorage.setItem('has_mood_logs_test_data', 'true');
     setHasTestData(true);
     fetchLogs();
     // Dispatch storage event to notify other components/pages of data updates
     window.dispatchEvent(new Event('storage'));
-    alert('테스트 데이터 56개가 성공적으로 생성되었습니다! 🦒✨');
+    alert('테스트 데이터 56개가 성공적으로 생성되었습니다! 기존 작성하신 데이터도 유지됩니다. 🦒✨');
   };
 
   const handleDeleteTestData = () => {
-    if (confirm('테스트 데이터를 삭제하고 이전 상태로 복구하시겠습니까?')) {
-      const backup = localStorage.getItem('mood_logs_backup');
-      if (backup) {
-        localStorage.setItem('mood_logs_local', backup);
-        localStorage.removeItem('mood_logs_backup');
+    if (confirm('테스트 데이터를 삭제하시겠습니까? 기존에 직접 기록하신 데이터는 유지됩니다.')) {
+      const currentLogsJson = localStorage.getItem('mood_logs_local');
+      const currentLogs = currentLogsJson ? JSON.parse(currentLogsJson) : [];
+      
+      // Filter out sample logs
+      const sampleIds = new Set(SAMPLE_LOGS.map(log => log.id));
+      const remainingLogs = currentLogs.filter((log: any) => !sampleIds.has(log.id));
+      
+      if (remainingLogs.length > 0) {
+        localStorage.setItem('mood_logs_local', JSON.stringify(remainingLogs));
       } else {
         localStorage.removeItem('mood_logs_local');
       }
+      
+      localStorage.setItem('has_mood_logs_test_data', 'false');
       setHasTestData(false);
       fetchLogs();
       // Dispatch storage event to notify other components/pages of data updates
       window.dispatchEvent(new Event('storage'));
-      alert('테스트 데이터가 삭제되고 원래 기록으로 정상 복구되었습니다.');
+      alert('테스트 데이터가 정상적으로 삭제되었습니다.');
     }
   };
 
