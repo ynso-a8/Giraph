@@ -6,6 +6,7 @@ import GiraffeFace from '@/components/GiraffeFace';
 import { moodService, MoodLog, getMoodState } from '@/lib/moodService';
 import { aiService, isGeminiConfigured } from '@/lib/aiService';
 import { Sparkles, Brain, CheckCircle2, HeartPulse, RefreshCw, Play, Pause, Compass, Send, User, Bot, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SAMPLE_HISTORY } from '@/lib/sampleLogs';
 
 type BreathingState = 'idle' | 'inhale' | 'hold' | 'exhale';
 
@@ -20,6 +21,7 @@ interface QuizAnswers {
 export default function AnalysisPage() {
   const [logs, setLogs] = useState<MoodLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasTestData, setHasTestData] = useState(false);
 
   // Calendar States for Analysis Date
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -75,6 +77,14 @@ export default function AnalysisPage() {
       }
     };
     fetchLogs();
+
+    const checkBackup = () => {
+      const backupExists = !!localStorage.getItem('giraffe_analysis_history_backup');
+      setHasTestData(backupExists);
+    };
+    checkBackup();
+    window.addEventListener('storage', checkBackup);
+    return () => window.removeEventListener('storage', checkBackup);
   }, []);
 
   const fetchAnalysisDates = () => {
@@ -117,6 +127,36 @@ export default function AnalysisPage() {
       return;
     }
     setSelectedDate(date);
+  };
+
+  const handleCreateTestData = () => {
+    // 1. Back up current analysis history
+    const currentHistory = localStorage.getItem('giraffe_analysis_history');
+    localStorage.setItem('giraffe_analysis_history_backup', currentHistory || '[]');
+    // 2. Overwrite with SAMPLE_HISTORY
+    localStorage.setItem('giraffe_analysis_history', JSON.stringify(SAMPLE_HISTORY));
+    setHasTestData(true);
+    fetchAnalysisDates();
+    // Dispatch storage event to notify other components/pages of data updates
+    window.dispatchEvent(new Event('storage'));
+    alert('자가진단 및 마음처방 dummy 데이터 2개가 성공적으로 생성되었습니다! 🦒✨');
+  };
+
+  const handleDeleteTestData = () => {
+    if (confirm('테스트 데이터를 삭제하고 이전 상태로 복구하시겠습니까?')) {
+      const backup = localStorage.getItem('giraffe_analysis_history_backup');
+      if (backup) {
+        localStorage.setItem('giraffe_analysis_history', backup);
+        localStorage.removeItem('giraffe_analysis_history_backup');
+      } else {
+        localStorage.removeItem('giraffe_analysis_history');
+      }
+      setHasTestData(false);
+      fetchAnalysisDates();
+      // Dispatch storage event to notify other components/pages of data updates
+      window.dispatchEvent(new Event('storage'));
+      alert('자가진단 및 마음처방 데이터가 삭제되고 원래 기록으로 정상 복구되었습니다.');
+    }
   };
 
   // Breathing timer
@@ -564,12 +604,35 @@ export default function AnalysisPage() {
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
-        <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
-          기래프 마음 클리닉
-        </span>
-        <h1 className="text-lg font-black text-white tracking-tight">마음 분석 & 해결책</h1>
-        <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가 진단을 통해 나에게 꼭 맞춘 솔루션을 처방받으세요.</p>
+      <div className="flex justify-between items-end border-b border-white/5 pb-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
+            기래프 마음 클리닉
+          </span>
+          <h1 className="text-lg font-black text-white tracking-tight">마음 분석 & 해결책</h1>
+          <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가 진단을 통해 나에게 꼭 맞춘 솔루션을 처방받으세요.</p>
+        </div>
+
+        {/* Test Data Controller for Analysis History */}
+        <div className="flex items-center select-none">
+          {hasTestData ? (
+            <button
+              type="button"
+              onClick={handleDeleteTestData}
+              className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              🗑️ 테스트 데이터 삭제
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreateTestData}
+              className="px-3 py-1.5 rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              ⚡ 테스트 데이터 생성
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -589,135 +652,135 @@ export default function AnalysisPage() {
                 {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일의 마음 자가진단
               </h3>
 
-              {/* Q1: Category */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-bold text-zinc-300">
-                  1. 오늘 내 마음에 가장 큰 자극을 준 주된 영역은 어디인가요?
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {categories.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setActiveCategory(c)}
-                      className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
-                        activeCategory === c
-                          ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
-                          : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q2: Intensity */}
-              <div className="flex flex-col gap-2 mt-1">
-                <label className="text-[11px] font-bold text-zinc-300">
-                  2. 느껴지는 기분의 세기나 선명함은 어떠한가요?
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {intensities.map((i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActiveIntensity(i)}
-                      className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
-                        activeIntensity === i
-                          ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
-                          : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                      }`}
-                    >
-                      {i}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q3: Physical */}
-              <div className="flex flex-col gap-2 mt-1">
-                <label className="text-[11px] font-bold text-zinc-300">
-                  3. 그 감정으로 인해 내 몸에 느껴지는 생생한 신호는 무엇인가요?
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {physicals.map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setActivePhysical(p)}
-                      className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
-                        activePhysical === p
-                          ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
-                          : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q4: Coping */}
-              <div className="flex flex-col gap-2 mt-1">
-                <label className="text-[11px] font-bold text-zinc-300">
-                  4. 지금 당장 어떤 식으로 기분을 조율하거나 다스리고 싶나요?
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {copings.map((cop) => (
-                    <button
-                      key={cop}
-                      type="button"
-                      onClick={() => setActiveCoping(cop)}
-                      className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
-                        activeCoping === cop
-                          ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
-                          : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                      }`}
-                    >
-                      {cop}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Q5: Subjective */}
-              <div className="flex flex-col gap-2 mt-1">
-                <label className="text-[11px] font-bold text-zinc-300">
-                  5. 머릿속에 맴도는 구체적인 원인이나 생각을 적어주세요.
-                </label>
-                <textarea
-                  value={subjectiveInput}
-                  onChange={(e) => setSubjectiveInput(e.target.value)}
-                  placeholder="예: 오랜만에 친구와 약속을 잡았는데 취소되어 허무함과 아쉬운 감정이 크게 몰려왔어요."
-                  rows={2}
-                  required
-                  className="w-full px-4 py-3 text-xs rounded-2xl border border-zinc-800 bg-zinc-900/20 focus:outline-none focus:border-[var(--color-primary)] text-zinc-200 placeholder-zinc-600 transition-colors resize-none leading-relaxed"
-                />
+            {/* Q1: Category */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-bold text-zinc-300">
+                1. 오늘 내 마음에 가장 큰 자극을 준 주된 영역은 어디인가요?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setActiveCategory(c)}
+                    className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                      activeCategory === c
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
+                        : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={submittingQuiz}
-              className="w-full py-4 px-6 rounded-2xl font-bold text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white transition-all duration-300 shadow-lg active:scale-98 cursor-pointer text-center flex items-center justify-center gap-2"
-            >
-              {submittingQuiz ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  마음 분석 및 처방전 조율 중...
-                </>
-              ) : (
-                '기래프 AI 진단 및 해결책 받기'
-              )}
-            </button>
-          </form>
-        </div>
+            {/* Q2: Intensity */}
+            <div className="flex flex-col gap-2 mt-1">
+              <label className="text-[11px] font-bold text-zinc-300">
+                2. 느껴지는 기분의 세기나 선명함은 어떠한가요?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {intensities.map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveIntensity(i)}
+                    className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                      activeIntensity === i
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
+                        : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q3: Physical */}
+            <div className="flex flex-col gap-2 mt-1">
+              <label className="text-[11px] font-bold text-zinc-300">
+                3. 그 감정으로 인해 내 몸에 느껴지는 생생한 신호는 무엇인가요?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {physicals.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setActivePhysical(p)}
+                    className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                      activePhysical === p
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
+                        : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q4: Coping */}
+            <div className="flex flex-col gap-2 mt-1">
+              <label className="text-[11px] font-bold text-zinc-300">
+                4. 지금 당장 어떤 식으로 기분을 조율하거나 다스리고 싶나요?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {copings.map((cop) => (
+                  <button
+                    key={cop}
+                    type="button"
+                    onClick={() => setActiveCoping(cop)}
+                    className={`py-2 px-3 text-[10px] font-bold rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                      activeCoping === cop
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md'
+                        : 'bg-zinc-900/30 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {cop}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Q5: Subjective */}
+            <div className="flex flex-col gap-2 mt-1">
+              <label className="text-[11px] font-bold text-zinc-300">
+                5. 머릿속에 맴도는 구체적인 원인이나 생각을 적어주세요.
+              </label>
+              <textarea
+                value={subjectiveInput}
+                onChange={(e) => setSubjectiveInput(e.target.value)}
+                placeholder="예: 오랜만에 친구와 약속을 잡았는데 취소되어 허무함과 아쉬운 감정이 크게 몰려왔어요."
+                rows={2}
+                required
+                className="w-full px-4 py-3 text-xs rounded-2xl border border-zinc-800 bg-zinc-900/20 focus:outline-none focus:border-[var(--color-primary)] text-zinc-200 placeholder-zinc-600 transition-colors resize-none leading-relaxed"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submittingQuiz}
+            className="w-full py-4 px-6 rounded-2xl font-bold text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white transition-all duration-300 shadow-lg active:scale-98 cursor-pointer text-center flex items-center justify-center gap-2"
+          >
+            {submittingQuiz ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                마음 분석 및 처방전 조율 중...
+              </>
+            ) : (
+              '기래프 AI 진단 및 해결책 받기'
+            )}
+          </button>
+        </form>
+      </div>
       ) : (
         /* Dynamic Consolidated Analysis & Solution Block */
         <div className="flex flex-col gap-6 animate-fade-in">
           {/* Merged AI Analysis Report Card */}
-          <div className="p-5.5 rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/40 via-zinc-950/65 to-zinc-900/40 shadow-xl flex flex-col gap-4 relative overflow-hidden">
+          <div className="p-5.5 rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/40 via-zinc-950/60 to-zinc-900/40 shadow-xl flex flex-col gap-4 relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute top-0 right-0 w-28 h-28 rounded-full bg-[var(--color-primary)]/10 blur-2xl pointer-events-none" />
 
@@ -921,7 +984,7 @@ export default function AnalysisPage() {
                 onClick={handleStartBreathing}
                 className="px-4.5 py-1.5 rounded-xl text-[10px] font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white flex items-center gap-1 shadow-lg active:scale-95 transition-all cursor-pointer"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <Play className="w-3 h-3 fill-current" />
                 호흡 가이드 켜기
               </button>
             ) : (
@@ -930,7 +993,7 @@ export default function AnalysisPage() {
                 onClick={handleStopBreathing}
                 className="px-4.5 py-1.5 rounded-xl text-[10px] font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center gap-1 border border-zinc-700 active:scale-95 transition-all cursor-pointer"
               >
-                <Pause className="w-3.5 h-3.5 fill-current" />
+                <Pause className="w-3 h-3 fill-current" />
                 호흡 가이드 끄기
               </button>
             )}

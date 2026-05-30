@@ -13,6 +13,8 @@ export default function ReportPage() {
 
   useEffect(() => {
     fetchHistory();
+    window.addEventListener('storage', fetchHistory);
+    return () => window.removeEventListener('storage', fetchHistory);
   }, []);
 
   const fetchHistory = () => {
