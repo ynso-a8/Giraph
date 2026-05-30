@@ -6,6 +6,7 @@ import GiraffeFace from '@/components/GiraffeFace';
 import { moodService, MoodLog, getMoodState } from '@/lib/moodService';
 import { aiService, isGeminiConfigured } from '@/lib/aiService';
 import { Sparkles, Brain, CheckCircle2, HeartPulse, RefreshCw, Play, Pause, Compass, Send, User, Bot, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SAMPLE_HISTORY } from '@/lib/sampleLogs';
 
 type BreathingState = 'idle' | 'inhale' | 'hold' | 'exhale';
 
@@ -20,6 +21,7 @@ interface QuizAnswers {
 export default function AnalysisPage() {
   const [logs, setLogs] = useState<MoodLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasTestData, setHasTestData] = useState(false);
 
   // Calendar States for Analysis Date
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -75,6 +77,14 @@ export default function AnalysisPage() {
       }
     };
     fetchLogs();
+
+    const checkBackup = () => {
+      const backupExists = !!localStorage.getItem('giraffe_analysis_history_backup');
+      setHasTestData(backupExists);
+    };
+    checkBackup();
+    window.addEventListener('storage', checkBackup);
+    return () => window.removeEventListener('storage', checkBackup);
   }, []);
 
   const fetchAnalysisDates = () => {
@@ -117,6 +127,36 @@ export default function AnalysisPage() {
       return;
     }
     setSelectedDate(date);
+  };
+
+  const handleCreateTestData = () => {
+    // 1. Back up current analysis history
+    const currentHistory = localStorage.getItem('giraffe_analysis_history');
+    localStorage.setItem('giraffe_analysis_history_backup', currentHistory || '[]');
+    // 2. Overwrite with SAMPLE_HISTORY
+    localStorage.setItem('giraffe_analysis_history', JSON.stringify(SAMPLE_HISTORY));
+    setHasTestData(true);
+    fetchAnalysisDates();
+    // Dispatch storage event to notify other components/pages of data updates
+    window.dispatchEvent(new Event('storage'));
+    alert('자가진단 및 마음처방 dummy 데이터 2개가 성공적으로 생성되었습니다! 🦒✨');
+  };
+
+  const handleDeleteTestData = () => {
+    if (confirm('테스트 데이터를 삭제하고 이전 상태로 복구하시겠습니까?')) {
+      const backup = localStorage.getItem('giraffe_analysis_history_backup');
+      if (backup) {
+        localStorage.setItem('giraffe_analysis_history', backup);
+        localStorage.removeItem('giraffe_analysis_history_backup');
+      } else {
+        localStorage.removeItem('giraffe_analysis_history');
+      }
+      setHasTestData(false);
+      fetchAnalysisDates();
+      // Dispatch storage event to notify other components/pages of data updates
+      window.dispatchEvent(new Event('storage'));
+      alert('자가진단 및 마음처방 데이터가 삭제되고 원래 기록으로 정상 복구되었습니다.');
+    }
   };
 
   // Breathing timer
@@ -564,12 +604,35 @@ export default function AnalysisPage() {
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
-        <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
-          기래프 마음 클리닉
-        </span>
-        <h1 className="text-lg font-black text-white tracking-tight">마음 분석 & 해결책</h1>
-        <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가 진단을 통해 나에게 꼭 맞춘 솔루션을 처방받으세요.</p>
+      <div className="flex justify-between items-end border-b border-white/5 pb-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-bold text-[var(--color-primary)] tracking-wider uppercase">
+            기래프 마음 클리닉
+          </span>
+          <h1 className="text-lg font-black text-white tracking-tight">마음 분석 & 해결책</h1>
+          <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">자가 진단을 통해 나에게 꼭 맞춘 솔루션을 처방받으세요.</p>
+        </div>
+
+        {/* Test Data Controller for Analysis History */}
+        <div className="flex items-center select-none">
+          {hasTestData ? (
+            <button
+              type="button"
+              onClick={handleDeleteTestData}
+              className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              🗑️ 테스트 데이터 삭제
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreateTestData}
+              className="px-3 py-1.5 rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              ⚡ 테스트 데이터 생성
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
