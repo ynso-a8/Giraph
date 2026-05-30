@@ -478,7 +478,7 @@ export const SAMPLE_HISTORY: AnalysisHistory[] = [
   },
   {
     id: 'h20015bd-24b5-4a5c-897c-9b16ea902102',
-    date: '2026-05-29T19:15:00.000Z',
+    date: '2026-05-27T10:15:00.000Z',
     answers: {
       category: '대인관계 👥',
       intensity: '어느 정도 잔잔히 느껴짐 🌊',
