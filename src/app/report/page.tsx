@@ -21,9 +21,6 @@ export default function ReportPage() {
     try {
       const records = moodService.getAnalysisHistory();
       setHistory(records);
-      if (records.length > 0 && !expandedId) {
-        setExpandedId(records[0].id); // Auto-expand the most recent one
-      }
     } catch (e) {
       console.error(e);
     } finally {
