@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, User, Bot, AlertCircle } from 'lucide-react';
+import { aiService, isGeminiConfigured } from '@/lib/aiService';
 
 interface Message {
   id: string;
@@ -63,7 +64,7 @@ export default function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -74,12 +75,34 @@ export default function ChatInterface() {
       timestamp: new Date(),
     };
 
+    const currentHistory = [...messages, userMsg];
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
 
-    // Simulate thinking delay
-    setTimeout(() => {
+    try {
+      let responseText = '';
+      if (isGeminiConfigured()) {
+        // Pass mapping history to aiService
+        responseText = await aiService.getChatbotResponse(currentHistory, userMsg.text);
+      } else {
+        // Simulating artificial thinking delay for the fallback
+        responseText = await new Promise<string>((resolve) => {
+          setTimeout(() => {
+            resolve(getBotResponse(userMsg.text));
+          }, 1000);
+        });
+      }
+
+      const botMsg: Message = {
+        id: Math.random().toString(),
+        sender: 'bot',
+        text: responseText,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (error) {
+      console.error('Gemini API chatbot response failed, using fallback:', error);
       const responseText = getBotResponse(userMsg.text);
       const botMsg: Message = {
         id: Math.random().toString(),
@@ -88,8 +111,9 @@ export default function ChatInterface() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   return (

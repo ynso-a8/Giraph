@@ -5,6 +5,7 @@ import MoodSlider from '@/components/MoodSlider';
 import GiraffeFace from '@/components/GiraffeFace';
 import { moodService, MoodLog, getMoodState } from '@/lib/moodService';
 import { Sparkles, Calendar, BookOpen, Trash2, CheckCircle, Database, Palette, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SAMPLE_LOGS } from '@/lib/sampleLogs';
 
 const COZY_THEMES = [
   { id: 'lavender', label: '차분한 라벤더', color: 'bg-violet-600', text: 'text-violet-400' },
@@ -29,6 +30,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
+  const [hasTestData, setHasTestData] = useState(false);
 
   // Calendar States
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -69,6 +71,10 @@ export default function Home() {
 
     setIsDemo(moodService.isDemoMode());
     fetchLogs();
+
+    // Check if test data backup exists to determine initial state
+    const backupExists = !!localStorage.getItem('mood_logs_backup');
+    setHasTestData(backupExists);
   }, []);
 
   const changeTheme = (themeId: string) => {
@@ -101,6 +107,37 @@ export default function Home() {
       setCalendarLogs(indexed);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleCreateTestData = () => {
+    // 1. Read current logs in local storage
+    const currentLogs = localStorage.getItem('mood_logs_local');
+    // 2. Save backup
+    localStorage.setItem('mood_logs_backup', currentLogs || '[]');
+    // 3. Overwrite local logs with static CSV sample logs
+    localStorage.setItem('mood_logs_local', JSON.stringify(SAMPLE_LOGS));
+    setHasTestData(true);
+    fetchLogs();
+    // Dispatch storage event to notify other components/pages of data updates
+    window.dispatchEvent(new Event('storage'));
+    alert('테스트 데이터 56개가 성공적으로 생성되었습니다! 🦒✨');
+  };
+
+  const handleDeleteTestData = () => {
+    if (confirm('테스트 데이터를 삭제하고 이전 상태로 복구하시겠습니까?')) {
+      const backup = localStorage.getItem('mood_logs_backup');
+      if (backup) {
+        localStorage.setItem('mood_logs_local', backup);
+        localStorage.removeItem('mood_logs_backup');
+      } else {
+        localStorage.removeItem('mood_logs_local');
+      }
+      setHasTestData(false);
+      fetchLogs();
+      // Dispatch storage event to notify other components/pages of data updates
+      window.dispatchEvent(new Event('storage'));
+      alert('테스트 데이터가 삭제되고 원래 기록으로 정상 복구되었습니다.');
     }
   };
 
@@ -354,7 +391,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       {/* Top Header Widget with Settings/Theme Switcher */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+      <div className="flex items-center justify-between border-b border-white/5 pb-4 relative">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
             <span className="text-lg font-black text-white tracking-tight">기래프 🦒</span>
@@ -365,6 +402,27 @@ export default function Home() {
             )}
           </div>
           <span className="text-[9px] text-zinc-500 font-semibold">내가 그린 기분 그래프</span>
+        </div>
+
+        {/* Center-aligned Test Data Generation Button */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          {hasTestData ? (
+            <button
+              type="button"
+              onClick={handleDeleteTestData}
+              className="px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              🗑️ 테스트 데이터 삭제
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreateTestData}
+              className="px-3 py-1.5 rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-[10px] font-bold transition-all duration-300 shadow-lg cursor-pointer flex items-center gap-1.5 active:scale-95"
+            >
+              ⚡ 테스트 데이터 생성
+            </button>
+          )}
         </div>
 
         {/* Floating Theme Selector Widget */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { moodService, MoodLog, getMoodState } from '@/lib/moodService';
 import GiraffeFace from '@/components/GiraffeFace';
 import { ClipboardList, Sparkles, Send, Calendar, Clock, Heart, Award, ArrowRight } from 'lucide-react';
+import { aiService, isGeminiConfigured } from '@/lib/aiService';
 
 interface FutureLetter {
   id: string;
@@ -26,6 +27,8 @@ export default function CapsulePage() {
   const [targetScore, setTargetScore] = useState(50);
   const [savedLetters, setSavedLetters] = useState<FutureLetter[]>([]);
   const [letterSaved, setLetterSaved] = useState(false);
+  const [aiFutureLetter, setAiFutureLetter] = useState('');
+  const [loadingLetter, setLoadingLetter] = useState(false);
 
   const todayStr = useMemo(() => {
     return new Date().toISOString().split('T')[0];
@@ -158,27 +161,53 @@ export default function CapsulePage() {
     setTimeout(() => setLetterSaved(false), 3000);
   };
 
-  // AI encouraging letter from future self
-  const futureSelfLetter = useMemo(() => {
-    if (logs.length === 0) {
-      return `안녕? 미래의 나야. 🦒✨\n\n비록 우리가 처음 만나 기래프에 기록된 하루 조각은 아직 없지만, 지금 이 순간 내 감정을 마주하고 변화하기 위해 이 리포트를 열어본 너의 소중한 발걸음 자체가 자랑스러워.\n\n살아가다 보면 우울한 소나기도 내리고, 따스한 가을 햇살도 찾아오는 법이잖아. 나중에 나뭇잎이 가득 쌓인 기래프를 함께 들여다볼 때, 우린 분명 더 단단하고 따스한 마음을 안은 사람이 되어 있을 거야. 걱정하지 마, 늘 너의 발걸음을 소중히 응원할게!`;
-    }
+  // AI encouraging letter from future self (with async Gemini LLM fetch & fallback)
+  useEffect(() => {
+    if (loading) return;
 
-    const scores = logs.map(l => l.mood_score);
-    const averageMood = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    
-    // Custom analysis text
-    let moodMetaphor = '';
-    if (averageMood <= 40) {
-      moodMetaphor = '감정 가뭄을 겪으며 조금은 마르고 속상한 기래프의 계절을 보냈구나.';
-    } else if (averageMood <= 70) {
-      moodMetaphor = '초원에서 잔잔하고 온화하게 평온을 맛보는 기래프의 나날을 채웠더구나.';
-    } else {
-      moodMetaphor = '기래프가 신선한 새싹을 가득 맛보고 춤추는 눈부신 번영을 만끽했더구나.';
-    }
+    const generateLetter = async () => {
+      setLoadingLetter(true);
+      const scores = logs.map(l => l.mood_score);
+      const averageMood = logs.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 50;
 
-    return `안녕? 미래의 나야. 🦒✨\n\n과거의 네가 마음을 숨기지 않고 정직하게 모아준 ${logs.length}개의 소중한 하루 일기를 읽으며 미래에서 이 편지를 써.\n\n그동안 우리는 평균 **${averageMood}점** 대의 기분 궤도를 지나며, ${moodMetaphor}\n\n점수가 뚝 떨어져서 목을 축 늘어뜨리고 속상해했던 그 아픈 순간에도, 기-log에 솔직한 '이유'를 적어 내려가던 너의 그 작은 용기가 미래의 나에게 얼마나 큰 힘과 구원이 되었는지 몰라. 돌아보면 그 힘든 겨울 같던 시기들도 결국 다 지나가고, 우리는 이렇게 편안하게 웃고 있단다.\n\n지나온 데이터는 증명하고 있어. 네가 마음을 기록하고 보살필 때 우리의 회복 탄력성은 언제나 쑥쑥 자라났다는 걸. 그러니 오늘 사소한 걱정에 너무 마음 아파하지 마. 과거의 네가 지탱해 줬듯, 나 역시 미래에서 너를 굳건히 믿고 기다리고 있을 테니까!`;
-  }, [logs]);
+      let moodMetaphor = '';
+      if (logs.length === 0) {
+        moodMetaphor = '아직 기록된 기래프의 계절이 없지만, 설렘 가득한 시작을 준비하고 있구나.';
+      } else if (averageMood <= 40) {
+        moodMetaphor = '감정 가뭄을 겪으며 조금은 마르고 속상한 기래프의 계절을 보냈구나.';
+      } else if (averageMood <= 70) {
+        moodMetaphor = '초원에서 잔잔하고 온화하게 평온을 맛보는 기래프의 나날을 채웠더구나.';
+      } else {
+        moodMetaphor = '기래프가 신선한 새싹을 가득 맛보고 춤추는 눈부신 번영을 만끽했더구나.';
+      }
+
+      // Pre-rendered local fallback text
+      let fallbackLetter = '';
+      if (logs.length === 0) {
+        fallbackLetter = `안녕? 미래의 나야. 🦒✨\n\n비록 우리가 처음 만나 기래프에 기록된 하루 조각은 아직 없지만, 지금 이 순간 내 감정을 마주하고 변화하기 위해 이 리포트를 열어본 너의 소중한 발걸음 자체가 자랑스러워.\n\n살아가다 보면 우울한 소나기도 내리고, 따스한 가을 햇살도 찾아오는 법이잖아. 나중에 나뭇잎이 가득 쌓인 기래프를 함께 들여다볼 때, 우린 분명 더 단단하고 따스한 마음을 안은 사람이 되어 있을 거야. 걱정하지 마, 늘 너의 발걸음을 소중히 응원할게!`;
+      } else {
+        fallbackLetter = `안녕? 미래의 나야. 🦒✨\n\n과거의 네가 마음을 숨기지 않고 정직하게 모아준 ${logs.length}개의 소중한 하루 일기를 읽으며 미래에서 이 편지를 써.\n\n그동안 우리는 평균 **${averageMood}점** 대의 기분 궤도를 지나며, ${moodMetaphor}\n\n점수가 뚝 떨어져서 목을 축 늘어뜨리고 속상해했던 그 아픈 순간에도, 기-log에 솔직한 '이유'를 적어 내려가던 너의 그 작은 용기가 미래의 나에게 얼마나 큰 힘과 구원이 되었는지 몰라. 돌아보면 그 힘든 겨울 같던 시기들도 결국 다 지나가고, 우리는 이렇게 편안하게 웃고 있단다.\n\n지나온 데이터는 증명하고 있어. 네가 마음을 기록하고 보살필 때 우리의 회복 탄력성은 언제나 쑥쑥 자라났다는 걸. 그러니 오늘 사소한 걱정에 너무 마음 아파하지 마. 과거의 네가 지탱해 줬듯, 나 역시 미래에서 너를 굳건히 믿고 기다리고 있을 테니까!`;
+      }
+
+      if (!isGeminiConfigured()) {
+        setAiFutureLetter(fallbackLetter);
+        setLoadingLetter(false);
+        return;
+      }
+
+      try {
+        const letterText = await aiService.getFutureSelfLetter(logs.length, averageMood, moodMetaphor);
+        setAiFutureLetter(letterText);
+      } catch (error) {
+        console.error('Gemini letter generation failed, falling back:', error);
+        setAiFutureLetter(fallbackLetter);
+      } finally {
+        setLoadingLetter(false);
+      }
+    };
+
+    generateLetter();
+  }, [logs, loading]);
 
   // Dynamic statistics
   const stats = useMemo(() => {
@@ -451,9 +480,18 @@ export default function CapsulePage() {
 
             <div className="p-5.5 rounded-3xl border border-white/5 bg-gradient-to-br from-zinc-900/40 via-zinc-950/65 to-zinc-900/40 shadow-xl flex flex-col gap-3 leading-relaxed relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-[var(--color-primary)]/10 blur-2xl pointer-events-none" />
-              <div className="text-[11px] text-zinc-300 font-medium whitespace-pre-wrap font-sans">
-                {futureSelfLetter}
-              </div>
+              {loadingLetter ? (
+                <div className="flex flex-col gap-2.5 py-4 animate-pulse">
+                  <div className="h-3 bg-zinc-800 rounded w-1/3 animate-pulse" />
+                  <div className="h-3 bg-zinc-800 rounded w-5/6 animate-pulse" />
+                  <div className="h-3 bg-zinc-800 rounded w-4/5 animate-pulse" />
+                  <div className="h-3 bg-zinc-800 rounded w-2/3 animate-pulse" />
+                </div>
+              ) : (
+                <div className="text-[11px] text-zinc-300 font-medium whitespace-pre-wrap font-sans">
+                  {aiFutureLetter}
+                </div>
+              )}
             </div>
           </div>
 
