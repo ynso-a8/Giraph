@@ -87,6 +87,11 @@ export const getMoodState = (score: number): MoodState & { accentColor: string }
 const STORAGE_KEY = 'mood_logs_local';
 
 const isSupabaseConfigured = (): boolean => {
+  // 배포판(Production build)에서는 사용자 간 데이터 혼선을 방지하기 위해 LocalStorage 모드로 강제 고정합니다.
+  if (process.env.NODE_ENV === 'production') {
+    return false;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return (
